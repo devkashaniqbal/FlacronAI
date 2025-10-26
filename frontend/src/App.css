@@ -1,0 +1,39 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Layout with sidebar */
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 280px;
+  background: #f9fafb;
+  min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+  }
+
+  .container {
+    padding: 0 1rem;
+  }
+}

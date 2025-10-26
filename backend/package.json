@@ -1,0 +1,43 @@
+{
+  "name": "flacronai",
+  "version": "1.0.0",
+  "description": "FlacronAI - AI-powered insurance inspection report generator using Google Gemini",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "ngrok": "node start-ngrok.js",
+    "demo": "echo Make sure server is running, then starting ngrok... && node start-ngrok.js",
+    "build": "npm install",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "insurance",
+    "reports",
+    "gemini",
+    "ai",
+    "flacron"
+  ],
+  "author": "Flacron Enterprises",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "cors": "^2.8.5",
+    "docx": "^9.0.2",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-fileupload": "^1.5.1",
+    "express-rate-limit": "^7.5.0",
+    "firebase-admin": "^13.0.2",
+    "helmet": "^8.0.0",
+    "mammoth": "^1.11.0",
+    "multer": "^1.4.5-lts.1",
+    "pdfkit": "^0.15.1",
+    "stripe": "^19.1.0",
+    "uuid": "^11.0.5"
+  },
+  "devDependencies": {
+    "ngrok": "^5.0.0-beta.2",
+    "nodemon": "^3.1.9"
+  }
+}

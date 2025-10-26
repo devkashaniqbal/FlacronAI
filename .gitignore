@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment variables (keep .env.production as template with placeholders)
+.env
+.env.local
+
+# Firebase credentials
+*firebase*.json
+serviceAccountKey.json
+
+# Generated files
+dist/
+build/
+*.log
+
+# Uploads and temporary files
+uploads/
+temp/
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Reports (generated)
+reports/*.pdf
+reports/*.docx
+
+# Testing
+coverage/
+.nyc_output/

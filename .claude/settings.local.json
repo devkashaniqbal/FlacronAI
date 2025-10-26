@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/pc/Downloads/**)",
+      "WebFetch(domain:flacronenterprises.com)",
+      "Bash(copy:*)",
+      "Bash(dir:*)",
+      "Bash(node:*)",
+      "Bash(ngrok version:*)",
+      "Bash(npm install:*)",
+      "WebSearch",
+      "Bash(findstr:*)",
+      "Bash(del \"C:\\Users\\pc\\Desktop\\FlacronCV\\public\\css\\icon-fixes.css\")",
+      "Bash(del \"C:\\Users\\pc\\Desktop\\FlacronCV\\extract-template.js\")",
+      "Bash(npm start)",
+      "Bash(taskkill:*)",
+      "Bash(pkill:*)",
+      "Bash(netstat:*)",
+      "Bash(npm create:*)",
+      "Bash(del /q client*)",
+      "Bash(bash:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout 5 bash:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx vite:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npx eslint:*)",
+      "Bash(tasklist:*)",
+      "Bash(timeout 3 bash:*)",
+      "Bash(stripe:*)",
+      "Bash(powershell -Command \"Invoke-WebRequest -Uri ''https://github.com/stripe/stripe-cli/releases/latest/download/stripe_1.21.8_windows_x86_64.zip'' -OutFile ''stripe-cli.zip''\")",
+      "Bash(del /q \"C:\\Users\\pc\\Desktop\\FlacronCV\\cleanup-project.sh\")",
+      "Bash(del /q \"C:\\Users\\pc\\Desktop\\FlacronCV\\backend\\flacronai-firebase-credentials.json\")",
+      "Bash(del /q \"C:\\Users\\pc\\Desktop\\FlacronCV\\flacronai-firebase-credentials.json\")",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
