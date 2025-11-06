@@ -37,6 +37,9 @@ const Dashboard = () => {
   const [loadingReports, setLoadingReports] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
   const [showPricingModal, setShowPricingModal] = useState(false);
+  const [billingHistory, setBillingHistory] = useState([]);
+  const [loadingBilling, setLoadingBilling] = useState(false);
+  const [reportImages, setReportImages] = useState([]);
 
   // Set page title
   useEffect(() => {
@@ -81,42 +84,46 @@ const Dashboard = () => {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // Initialize template selector
+  // Initialize template selector - re-run when currentPage changes
   useEffect(() => {
-    const templateContainer = document.getElementById('templateSelectorContainer');
-    if (templateContainer) {
-      const templateManager = createTemplateSelector('reportForm', 'templateSelectorContainer');
+    if (currentPage === 'generate') {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        const templateContainer = document.getElementById('templateSelectorContainer');
+        if (templateContainer) {
+          const templateManager = createTemplateSelector('reportForm', 'templateSelectorContainer');
 
-      // Add click handlers that update React state
-      const templateCards = templateContainer.querySelectorAll('.template-card');
-      templateCards.forEach(card => {
-        const originalHandler = card.onclick;
-        card.onclick = (e) => {
-          const templateKey = card.dataset.template;
-          const templates = templateManager.getAllTemplates();
-          const template = templates[templateKey];
+          // Add click handlers that update React state
+          const templateCards = templateContainer.querySelectorAll('.template-card');
+          templateCards.forEach(card => {
+            card.onclick = (e) => {
+              const templateKey = card.dataset.template;
+              const templates = templateManager.getAllTemplates();
+              const template = templates[templateKey];
 
-          if (template && template.data) {
-            // Update React state
-            setFormData(template.data);
+              if (template && template.data) {
+                // Update React state
+                setFormData(template.data);
 
-            // Show notification
-            if (window.showToast) {
-              window.showToast(`Template "${template.name}" applied!`, 'success');
-            }
+                // Show notification
+                if (window.showToast) {
+                  window.showToast(`Template "${template.name}" applied!`, 'success');
+                }
 
-            // Visual feedback
-            card.style.borderColor = '#FF7C08';
-            card.style.background = '#fff7ed';
-            setTimeout(() => {
-              card.style.borderColor = '';
-              card.style.background = '';
-            }, 1000);
-          }
-        };
-      });
+                // Visual feedback
+                card.style.borderColor = '#FF7C08';
+                card.style.background = '#fff7ed';
+                setTimeout(() => {
+                  card.style.borderColor = '';
+                  card.style.background = '';
+                }, 1000);
+              }
+            };
+          });
+        }
+      }, 100);
     }
-  }, []);
+  }, [currentPage]);
 
   // Initialize keyboard shortcuts
   useEffect(() => {
@@ -168,10 +175,33 @@ const Dashboard = () => {
     }
   };
 
+  const fetchBillingHistory = async () => {
+    setLoadingBilling(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/payment/billing-history`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setBillingHistory(result.history || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch billing history:', error);
+    } finally {
+      setLoadingBilling(false);
+    }
+  };
+
   const viewReport = (report) => {
     setSelectedReport(report);
     setCurrentReportId(report.id);
     setReportContent(report.content);
+    setReportImages(report.images || []);
     setCurrentPage('generate');
     document.getElementById('reportForm').style.display = 'none';
     document.getElementById('reportResult').style.display = 'block';
@@ -240,7 +270,7 @@ const Dashboard = () => {
           ...formData,
           userId: user?.uid,
           customPrompt: aiPrompt, // Pass the CRU-formatted prompt
-          photos: null // File upload handling would go here
+          photos: null // Photos will be uploaded separately
         })
       });
 
@@ -253,6 +283,48 @@ const Dashboard = () => {
       setCurrentReportId(result.reportId);
       setReportContent(result.report.content);
 
+      // Upload photos if any were selected
+      if (formData.photos && formData.photos.length > 0) {
+        try {
+          const photoFormData = new FormData();
+          Array.from(formData.photos).forEach((file) => {
+            photoFormData.append('images', file);
+          });
+
+          const uploadResponse = await fetch(`${API_BASE_URL}/reports/${result.reportId}/images`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: photoFormData
+          });
+
+          const uploadResult = await uploadResponse.json();
+
+          if (uploadResult.success) {
+            showToast(`${uploadResult.uploaded} photo(s) uploaded successfully`, 'success');
+
+            // Fetch the updated report to get image URLs
+            const reportResponse = await fetch(`${API_BASE_URL}/reports/${result.reportId}`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            const reportData = await reportResponse.json();
+            if (reportData.success && reportData.report.images) {
+              setReportImages(reportData.report.images);
+            }
+          }
+        } catch (uploadError) {
+          console.error('Photo upload error:', uploadError);
+          showNotification('Report generated but photos failed to upload', 'warning');
+        }
+      } else {
+        setReportImages([]);
+      }
+
       // Show celebration and notifications
       celebrate('Report Generated Successfully!', 'success');
       showToast('Report ready for download', 'success');
@@ -262,8 +334,9 @@ const Dashboard = () => {
       document.getElementById('reportForm').style.display = 'none';
       document.getElementById('reportResult').style.display = 'block';
 
-      // Refresh usage stats
+      // Refresh usage stats and reports list
       fetchUsageStats();
+      fetchMyReports();
     } catch (error) {
       console.error('Generate report error:', error);
       showNotification(error.message, 'error');
@@ -293,6 +366,39 @@ const Dashboard = () => {
     setReportContent('');
     document.getElementById('reportForm').style.display = 'block';
     document.getElementById('reportResult').style.display = 'none';
+  };
+
+  const handleUpgradeCheckout = async (tier) => {
+    try {
+      setLoading(true);
+      showNotification('Creating checkout session...', 'info');
+
+      const response = await fetch(`${API_BASE_URL}/payment/create-checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          tier: tier,
+          userId: user?.uid
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.url) {
+        // Redirect to Stripe checkout
+        window.location.href = result.url;
+      } else {
+        showNotification(result.error || 'Failed to create checkout session', 'error');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      showNotification('Failed to create checkout session', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Format report content with proper HTML styling
@@ -364,19 +470,22 @@ const Dashboard = () => {
     return formattedHTML;
   };
 
-  const handleExport = async (format) => {
-    if (!currentReportId) {
+  const handleExport = async (format, reportId = null) => {
+    // Use provided reportId or fall back to currentReportId
+    const idToExport = reportId || currentReportId;
+
+    if (!idToExport) {
       showNotification('No report to export', 'error');
       return;
     }
 
     try {
       if (format === 'docx') {
-        await exportAsDocx(currentReportId, token);
+        await exportAsDocx(idToExport, token);
       } else if (format === 'pdf') {
-        await exportAsPdf(currentReportId, token);
+        await exportAsPdf(idToExport, token);
       } else if (format === 'html') {
-        await exportAsHtml(currentReportId, token);
+        await exportAsHtml(idToExport, token);
       }
       showNotification(`Report exported as ${format.toUpperCase()}`, 'success');
     } catch (error) {
@@ -393,6 +502,8 @@ const Dashboard = () => {
       setShowPricingModal(true); // Show pricing modal instead of navigating
     } else if (page === 'my-reports') {
       fetchMyReports(); // Load reports when navigating to My Reports
+    } else if (page === 'usage') {
+      fetchBillingHistory(); // Load billing history when navigating to Usage & Billing
     } else if (page === 'settings') {
       showNotification('Settings page coming soon!', 'info');
     }
@@ -736,6 +847,20 @@ const Dashboard = () => {
                   dangerouslySetInnerHTML={{ __html: formatReportContent(reportContent) }}
                 />
 
+                {reportImages.length > 0 && (
+                  <div className="report-images">
+                    <h4>Attached Photos</h4>
+                    <div className="images-grid">
+                      {reportImages.map((image, index) => (
+                        <div key={index} className="image-item">
+                          <img src={image.url} alt={image.fileName || `Photo ${index + 1}`} />
+                          <p className="image-name">{image.fileName || `Photo ${index + 1}`}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="result-actions">
                   <button className="btn btn-primary" onClick={() => handleExport('docx')}>Export as DOCX</button>
                   <button className="btn btn-primary" onClick={() => handleExport('pdf')}>Export as PDF</button>
@@ -787,14 +912,14 @@ const Dashboard = () => {
                       <button className="btn btn-sm btn-primary" onClick={() => viewReport(report)}>
                         <i className="fas fa-eye"></i> View
                       </button>
-                      <button className="btn btn-sm btn-outline" onClick={() => handleExport('pdf')}>
+                      <button className="btn btn-sm btn-outline" onClick={() => handleExport('pdf', report.id)}>
                         <i className="fas fa-file-pdf"></i> PDF
                       </button>
-                      <button className="btn btn-sm btn-outline" onClick={() => handleExport('docx')}>
+                      <button className="btn btn-sm btn-outline" onClick={() => handleExport('docx', report.id)}>
                         <i className="fas fa-file-word"></i> DOCX
                       </button>
-                      <button className="btn btn-sm btn-danger" onClick={() => deleteReport(report.id)}>
-                        <i className="fas fa-trash"></i>
+                      <button className="btn btn-sm btn-danger" onClick={() => deleteReport(report.id)} title="Delete Report">
+                        <i className="fas fa-trash"></i> Delete
                       </button>
                     </div>
                   </div>
@@ -871,11 +996,47 @@ const Dashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td colSpan="5" style={{textAlign: 'center', padding: '2rem'}}>
-                        No billing history available
-                      </td>
-                    </tr>
+                    {loadingBilling ? (
+                      <tr>
+                        <td colSpan="5" style={{textAlign: 'center', padding: '2rem'}}>
+                          Loading billing history...
+                        </td>
+                      </tr>
+                    ) : billingHistory.length > 0 ? (
+                      billingHistory.map((item) => (
+                        <tr key={item.id}>
+                          <td>{item.date}</td>
+                          <td>{item.description}</td>
+                          <td>{item.amount}</td>
+                          <td>
+                            <span className={`status-badge status-${item.status.toLowerCase()}`}>
+                              {item.status}
+                            </span>
+                          </td>
+                          <td>
+                            {item.invoiceUrl ? (
+                              <a href={item.invoiceUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline">
+                                <i className="fas fa-download"></i> Download
+                              </a>
+                            ) : (
+                              <span>-</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" style={{textAlign: 'center', padding: '2rem'}}>
+                          <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem'}}>
+                            <i className="fas fa-receipt" style={{fontSize: '2rem', color: '#9ca3af'}}></i>
+                            <div>
+                              <p style={{margin: '0 0 0.5rem 0', fontWeight: '600', color: '#374151'}}>No billing history yet</p>
+                              <p style={{margin: 0, fontSize: '0.875rem', color: '#6b7280'}}>Billing history will appear here once you upgrade to a paid plan</p>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -898,20 +1059,24 @@ const Dashboard = () => {
                   <div className="plan-badge">Most Popular</div>
                   <h3>Professional</h3>
                   <div className="plan-price">
-                    <span className="price-amount">$49</span>
+                    <span className="price-amount">$39.99</span>
                     <span className="price-period">/month</span>
                   </div>
                   <ul className="plan-features">
-                    <li><i className="fas fa-check"></i> 50 reports per month</li>
+                    <li><i className="fas fa-check"></i> 20 reports per month</li>
                     <li><i className="fas fa-check"></i> AI-powered report generation</li>
-                    <li><i className="fas fa-check"></i> Export to PDF, DOCX, HTML</li>
-                    <li><i className="fas fa-check"></i> Professional templates</li>
-                    <li><i className="fas fa-check"></i> Priority support</li>
-                    <li><i className="fas fa-check"></i> Report history & storage</li>
+                    <li><i className="fas fa-check"></i> PDF & DOCX export</li>
+                    <li><i className="fas fa-check"></i> No watermark</li>
+                    <li><i className="fas fa-check"></i> Custom logo</li>
+                    <li><i className="fas fa-check"></i> Email support</li>
                   </ul>
-                  <Link to="/checkout?plan=professional" className="btn btn-primary btn-block">
-                    Select Professional
-                  </Link>
+                  <button
+                    onClick={() => handleUpgradeCheckout('professional')}
+                    className="btn btn-primary btn-block"
+                    disabled={loading}
+                  >
+                    {loading ? 'Loading...' : 'Select Professional'}
+                  </button>
                 </div>
 
                 {/* Agency Plan */}
@@ -919,41 +1084,49 @@ const Dashboard = () => {
                   <div className="plan-badge">Best Value</div>
                   <h3>Agency</h3>
                   <div className="plan-price">
-                    <span className="price-amount">$149</span>
+                    <span className="price-amount">$99.99</span>
                     <span className="price-period">/month</span>
                   </div>
                   <ul className="plan-features">
-                    <li><i className="fas fa-check"></i> 200 reports per month</li>
-                    <li><i className="fas fa-check"></i> Everything in Professional</li>
-                    <li><i className="fas fa-check"></i> Team collaboration tools</li>
+                    <li><i className="fas fa-check"></i> 100 reports per month</li>
+                    <li><i className="fas fa-check"></i> 5 user accounts</li>
+                    <li><i className="fas fa-check"></i> All export formats</li>
+                    <li><i className="fas fa-check"></i> Agency dashboard</li>
                     <li><i className="fas fa-check"></i> Custom branding</li>
-                    <li><i className="fas fa-check"></i> Advanced analytics</li>
-                    <li><i className="fas fa-check"></i> API access</li>
+                    <li><i className="fas fa-check"></i> Priority support</li>
                   </ul>
-                  <Link to="/checkout?plan=agency" className="btn btn-primary btn-block">
-                    Select Agency
-                  </Link>
+                  <button
+                    onClick={() => handleUpgradeCheckout('agency')}
+                    className="btn btn-primary btn-block"
+                    disabled={loading}
+                  >
+                    {loading ? 'Loading...' : 'Select Agency'}
+                  </button>
                 </div>
 
                 {/* Enterprise Plan */}
                 <div className="pricing-modal-card">
-                  <div className="plan-badge">Custom</div>
+                  <div className="plan-badge">Premium</div>
                   <h3>Enterprise</h3>
                   <div className="plan-price">
-                    <span className="price-amount">Custom</span>
-                    <span className="price-period">pricing</span>
+                    <span className="price-amount">$499</span>
+                    <span className="price-period">/month</span>
                   </div>
                   <ul className="plan-features">
                     <li><i className="fas fa-check"></i> Unlimited reports</li>
-                    <li><i className="fas fa-check"></i> Everything in Agency</li>
-                    <li><i className="fas fa-check"></i> Dedicated account manager</li>
-                    <li><i className="fas fa-check"></i> Custom integrations</li>
-                    <li><i className="fas fa-check"></i> SLA guarantee</li>
-                    <li><i className="fas fa-check"></i> White-label solution</li>
+                    <li><i className="fas fa-check"></i> Unlimited users</li>
+                    <li><i className="fas fa-check"></i> API access</li>
+                    <li><i className="fas fa-check"></i> White-label portal</li>
+                    <li><i className="fas fa-check"></i> Custom integration</li>
+                    <li><i className="fas fa-check"></i> Dedicated support</li>
                   </ul>
-                  <a href="mailto:sales@flacronenterprises.com" className="btn btn-primary btn-block">
-                    Contact Sales
-                  </a>
+                  <button
+                    onClick={() => handleUpgradeCheckout('enterprise')}
+                    className="btn btn-primary btn-block"
+                    disabled={loading}
+                  >
+                    {loading ? 'Loading...' : 'Contact Sales'}
+                  </button>
                 </div>
               </div>
             </div>
@@ -977,16 +1150,17 @@ const Dashboard = () => {
               </div>
               <div className="footer-section">
                 <h4>Company</h4>
-                <a href="https://flacronenterprises.com">About</a>
-                <a href="#">Contact</a>
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
+                <a href="https://flacronenterprises.com/about-us/" target="_blank" rel="noopener noreferrer">About</a>
+                <a href="https://flacronenterprises.com/contact-us/" target="_blank" rel="noopener noreferrer">Contact</a>
+                <Link to="/privacy-policy">Privacy Policy</Link>
+                <Link to="/terms-of-service">Terms of Service</Link>
               </div>
               <div className="footer-section">
                 <h4>Connect</h4>
-                <a href="#">Twitter</a>
-                <a href="#">LinkedIn</a>
-                <a href="#">GitHub</a>
+                <a href="https://www.tiktok.com/@flacronenterprises" target="_blank" rel="noopener noreferrer">TikTok</a>
+                <a href="https://www.linkedin.com/company/flacronenterprisesllc/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                <a href="https://www.instagram.com/flacronenterprisesllc/" target="_blank" rel="noopener noreferrer">Instagram</a>
+                <a href="https://www.facebook.com/people/Flacron-Enterprises/61579538447653/" target="_blank" rel="noopener noreferrer">Facebook</a>
                 <a href="mailto:support@flacronenterprises.com">Support</a>
               </div>
             </div>

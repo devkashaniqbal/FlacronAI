@@ -97,8 +97,8 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
         quantity: 1,
       }],
       mode: 'subscription',
-      success_url: `${process.env.FRONTEND_URL}/checkout?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.FRONTEND_URL}/checkout?canceled=true`,
+      success_url: `${process.env.FRONTEND_URL}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL}/dashboard?canceled=true`,
       client_reference_id: userId,
       customer_email: userData.email,
       metadata: {
@@ -216,11 +216,17 @@ router.get('/verify-session/:sessionId', authenticateToken, async (req, res) => 
         }
       }
 
+      // Get current month period
+      const now = new Date();
+      const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
       await userRef.update({
         tier: session.metadata.tier,
         stripeCustomerId: session.customer,
         subscriptionId: session.subscription,
         subscriptionStatus: 'active',
+        periodUsage: 0, // Reset report count on upgrade
+        currentPeriod: currentPeriod, // Update to current period
         updatedAt: new Date().toISOString()
       });
 
@@ -297,6 +303,91 @@ router.post('/cancel-subscription', authenticateToken, async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to cancel subscription'
+    });
+  }
+});
+
+/**
+ * Get Billing History
+ * GET /api/payment/billing-history
+ *
+ * Returns the user's billing history from Stripe
+ */
+router.get('/billing-history', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    console.log('Fetching billing history for user:', userId);
+
+    // Get user data
+    const db = getFirestore();
+    const userRef = db.collection('users').doc(userId);
+    const userDoc = await userRef.get();
+
+    if (!userDoc.exists) {
+      console.log('User not found:', userId);
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    const userData = userDoc.data();
+
+    // If user doesn't have a Stripe customer ID, return empty history
+    if (!userData.stripeCustomerId) {
+      console.log('No Stripe customer ID for user:', userId);
+      return res.json({
+        success: true,
+        history: []
+      });
+    }
+
+    console.log('Fetching Stripe invoices for customer:', userData.stripeCustomerId);
+
+    // Fetch invoices from Stripe with error handling
+    let invoices;
+    try {
+      invoices = await stripe.invoices.list({
+        customer: userData.stripeCustomerId,
+        limit: 10
+      });
+    } catch (stripeError) {
+      console.error('Stripe API error:', stripeError);
+      // Return empty history if Stripe fails, don't crash the app
+      return res.json({
+        success: true,
+        history: []
+      });
+    }
+
+    // Format billing history
+    const history = invoices.data.map(invoice => ({
+      id: invoice.id,
+      date: new Date(invoice.created * 1000).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+      description: invoice.lines.data[0]?.description || 'Subscription',
+      amount: `$${(invoice.amount_paid / 100).toFixed(2)}`,
+      status: invoice.status === 'paid' ? 'Paid' : invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1),
+      invoiceUrl: invoice.invoice_pdf || invoice.hosted_invoice_url
+    }));
+
+    console.log(`Billing history fetched: ${history.length} invoices`);
+
+    res.json({
+      success: true,
+      history: history
+    });
+
+  } catch (error) {
+    console.error('Billing history error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to fetch billing history'
     });
   }
 });
@@ -383,15 +474,21 @@ async function handleCheckoutComplete(session) {
       }
     }
 
+    // Get current month period
+    const now = new Date();
+    const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
     await userRef.update({
       tier: tier,
       stripeCustomerId: session.customer,
       subscriptionId: session.subscription,
       subscriptionStatus: 'active',
+      periodUsage: 0, // Reset report count on upgrade
+      currentPeriod: currentPeriod, // Update to current period
       updatedAt: new Date().toISOString()
     });
 
-    console.log(`✅ User ${userId} successfully upgraded to ${tier} tier`);
+    console.log(`✅ User ${userId} successfully upgraded to ${tier} tier, report count reset`);
 
   } catch (error) {
     console.error('❌ Error handling checkout complete:', error);

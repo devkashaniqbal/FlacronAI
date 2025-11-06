@@ -11,6 +11,8 @@ import CRMLogin from './pages/CRMLogin';
 import Checkout from './pages/Checkout';
 import Subscriptions from './pages/Subscriptions';
 import AdminTierUpdate from './pages/AdminTierUpdate';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 import './App.css';
 
@@ -62,6 +64,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

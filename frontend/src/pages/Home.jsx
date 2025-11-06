@@ -221,7 +221,7 @@ const Home = () => {
                 <li><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 18L18 6M6 6l12 12" stroke="#666666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> Custom logo</li>
                 <li><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 18L18 6M6 6l12 12" stroke="#666666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> Priority support</li>
               </ul>
-              <Link to="/auth" className="btn btn-outline">Get Started</Link>
+              <Link to="/auth?redirect=checkout&plan=starter" className="btn btn-outline">Get Started</Link>
             </div>
 
             {/* Professional */}
@@ -243,7 +243,7 @@ const Home = () => {
                 <li><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke="#FF7C08" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> Custom logo</li>
                 <li><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke="#FF7C08" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> Email support</li>
               </ul>
-              <Link to="/auth" className="btn btn-primary">Get Started</Link>
+              <Link to="/auth?redirect=checkout&plan=professional" className="btn btn-primary">Get Started</Link>
             </div>
 
             {/* Agency */}
@@ -264,7 +264,7 @@ const Home = () => {
                 <li><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke="#FF7C08" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> Custom branding</li>
                 <li><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke="#FF7C08" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> Priority support</li>
               </ul>
-              <Link to="/auth" className="btn btn-outline">Get Started</Link>
+              <Link to="/auth?redirect=checkout&plan=agency" className="btn btn-outline">Get Started</Link>
             </div>
 
             {/* Enterprise */}
@@ -285,7 +285,7 @@ const Home = () => {
                 <li><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke="#FF7C08" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> Custom integration</li>
                 <li><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke="#FF7C08" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg> Dedicated support</li>
               </ul>
-              <Link to="/auth" className="btn btn-outline">Contact Sales</Link>
+              <Link to="/auth?redirect=checkout&plan=enterprise" className="btn btn-outline">Contact Sales</Link>
             </div>
           </div>
         </div>
@@ -308,16 +308,17 @@ const Home = () => {
             </div>
             <div className="footer-section">
               <h4>Company</h4>
-              <a href="https://flacronenterprises.com" target="_blank" rel="noopener noreferrer">About</a>
-              <a href="#">Contact</a>
-              <a href="#">Privacy Policy</a>
-              <a href="#">Terms of Service</a>
+              <a href="https://flacronenterprises.com/about-us/" target="_blank" rel="noopener noreferrer">About</a>
+              <a href="https://flacronenterprises.com/contact-us/" target="_blank" rel="noopener noreferrer">Contact</a>
+              <Link to="/privacy-policy">Privacy Policy</Link>
+              <Link to="/terms-of-service">Terms of Service</Link>
             </div>
             <div className="footer-section">
               <h4>Connect</h4>
-              <a href="#">Twitter</a>
-              <a href="#">LinkedIn</a>
-              <a href="#">GitHub</a>
+              <a href="https://www.tiktok.com/@flacronenterprises" target="_blank" rel="noopener noreferrer">TikTok</a>
+              <a href="https://www.linkedin.com/company/flacronenterprisesllc/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+              <a href="https://www.instagram.com/flacronenterprisesllc/" target="_blank" rel="noopener noreferrer">Instagram</a>
+              <a href="https://www.facebook.com/people/Flacron-Enterprises/61579538447653/" target="_blank" rel="noopener noreferrer">Facebook</a>
               <a href="mailto:support@flacronenterprises.com">Support</a>
             </div>
           </div>
