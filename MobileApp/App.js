@@ -161,7 +161,7 @@ export default function App() {
 
     setLoadingReports(true);
     try {
-      const response = await fetch(`${API_URL}/reports/my-reports`, {
+      const response = await fetch(`${API_URL}/reports`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
       const data = await response.json();
