@@ -297,6 +297,7 @@ router.post('/:id/export', authenticateToken, async (req, res) => {
         success: true,
         fileName: uploadResult.fileName,
         url: uploadResult.url,
+        downloadUrl: uploadResult.url,  // For mobile app compatibility
         format: format
       });
     } else {

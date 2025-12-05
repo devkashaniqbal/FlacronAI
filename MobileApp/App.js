@@ -430,8 +430,16 @@ export default function App() {
         const filename = `FlacronAI_${report.claimNumber.replace(/[^a-zA-Z0-9]/g, '_')}.${fileExtension}`;
         const fileUri = FileSystem.documentDirectory + filename;
 
-        console.log('   📥 Downloading file...');
-        const downloadResult = await FileSystem.downloadAsync(data.downloadUrl, fileUri);
+        // Construct full download URL if relative path
+        let downloadUrl = data.downloadUrl;
+        if (downloadUrl.startsWith('/')) {
+          // Convert /api URL to base URL
+          const baseUrl = API_URL.replace('/api', '');
+          downloadUrl = baseUrl + downloadUrl;
+        }
+
+        console.log('   📥 Downloading file from:', downloadUrl);
+        const downloadResult = await FileSystem.downloadAsync(downloadUrl, fileUri);
 
         console.log('   ✅ File downloaded:', downloadResult.uri);
 

@@ -1,7 +1,7 @@
 // Storage Configuration
-// Automatically uses Firebase Storage in production, local storage in development
+// Uses Firebase Storage only if explicitly enabled, otherwise uses local storage
 
-const useFirebaseStorage = process.env.NODE_ENV === 'production' || process.env.USE_FIREBASE_STORAGE === 'true';
+const useFirebaseStorage = process.env.USE_FIREBASE_STORAGE === 'true';
 
 let storageService;
 
