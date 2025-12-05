@@ -78,6 +78,10 @@ const Dashboard = () => {
     const handleHashChange = () => {
       const newHash = window.location.hash.slice(1) || 'generate';
       setCurrentPage(newHash);
+      // Clear form data when navigating to generate page to prevent demo data persistence
+      if (newHash === 'generate') {
+        resetForm();
+      }
     };
 
     window.addEventListener('hashchange', handleHashChange);
@@ -364,8 +368,17 @@ const Dashboard = () => {
     });
     setCurrentReportId(null);
     setReportContent('');
-    document.getElementById('reportForm').style.display = 'block';
-    document.getElementById('reportResult').style.display = 'none';
+
+    // Clear file input
+    const photoInput = document.getElementById('photos');
+    if (photoInput) {
+      photoInput.value = '';
+    }
+
+    const reportForm = document.getElementById('reportForm');
+    const reportResult = document.getElementById('reportResult');
+    if (reportForm) reportForm.style.display = 'block';
+    if (reportResult) reportResult.style.display = 'none';
   };
 
   const handleUpgradeCheckout = async (tier) => {
@@ -820,9 +833,10 @@ const Dashboard = () => {
                       name="photos"
                       multiple
                       accept="image/*"
+                      capture="environment"
                       onChange={handleInputChange}
                     />
-                    <p className="form-help">Upload up to 10 photos (Max 10MB each)</p>
+                    <p className="form-help">Upload up to 10 photos (Max 10MB each) - Click to use camera or browse</p>
                   </div>
                 </div>
 
