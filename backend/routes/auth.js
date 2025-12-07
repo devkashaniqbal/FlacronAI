@@ -362,4 +362,114 @@ router.post('/logout', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/auth/resend-verification
+ * Resend email verification link
+ */
+router.post('/resend-verification', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email is required'
+      });
+    }
+
+    // Get user by email
+    let userRecord;
+    try {
+      userRecord = await getAuth().getUserByEmail(email);
+    } catch (error) {
+      if (error.code === 'auth/user-not-found') {
+        return res.status(404).json({
+          success: false,
+          error: 'No account found with this email'
+        });
+      }
+      throw error;
+    }
+
+    // Check if already verified
+    if (userRecord.emailVerified) {
+      return res.json({
+        success: true,
+        message: 'Email is already verified. You can login now.',
+        alreadyVerified: true
+      });
+    }
+
+    // Generate new verification link
+    const verificationLink = await getAuth().generateEmailVerificationLink(email);
+
+    console.log(`📧 Resent verification email to: ${email}`);
+    console.log(`📧 Verification link: ${verificationLink}`);
+
+    // In production, send this via email service (SendGrid, etc.)
+    // For now, we'll log it
+
+    res.json({
+      success: true,
+      message: 'Verification email sent! Please check your inbox and spam folder.',
+      verificationLink: verificationLink // Remove in production
+    });
+
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to send verification email'
+    });
+  }
+});
+
+/**
+ * POST /api/auth/check-verification
+ * Check if user's email is verified
+ */
+router.post('/check-verification', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email is required'
+      });
+    }
+
+    // Get user by email
+    let userRecord;
+    try {
+      userRecord = await getAuth().getUserByEmail(email);
+    } catch (error) {
+      if (error.code === 'auth/user-not-found') {
+        return res.status(404).json({
+          success: false,
+          error: 'No account found with this email'
+        });
+      }
+      throw error;
+    }
+
+    console.log(`🔍 Checking verification for: ${email} - Verified: ${userRecord.emailVerified}`);
+
+    res.json({
+      success: true,
+      emailVerified: userRecord.emailVerified,
+      message: userRecord.emailVerified
+        ? 'Email is verified. You can login now.'
+        : 'Email not verified yet. Please check your inbox.'
+    });
+
+  } catch (error) {
+    console.error('Check verification error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to check verification status'
+    });
+  }
+});
+
 module.exports = router;

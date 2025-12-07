@@ -991,6 +991,11 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [showPassword, setShowPassword] = useState(false);
 
+  // Email verification state
+  const [showVerificationScreen, setShowVerificationScreen] = useState(false);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
+  const [resendingVerification, setResendingVerification] = useState(false);
+
   // Report generation state
   const [formData, setFormData] = useState({
     claimNumber: '',
@@ -1266,16 +1271,18 @@ export default function App() {
 
       if (data.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert(
-          'Success',
-          'Account created successfully! You can login now.',
-          [{ text: 'OK', onPress: () => {
-            setIsLogin(true);
-            setEmail('');
-            setPassword('');
-            setDisplayName('');
-          }}]
-        );
+
+        // Store email for verification screen
+        setPendingVerificationEmail(email);
+
+        // Clear form
+        setPassword('');
+        setDisplayName('');
+
+        // Show verification screen
+        setShowVerificationScreen(true);
+
+        console.log('   Showing verification screen for:', email);
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
@@ -1346,11 +1353,20 @@ export default function App() {
         console.log('   ❌ Login failed:', data.error);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 
+        // Check if email verification is required
+        if (data.emailVerified === false || (data.error && data.error.includes('verify your email'))) {
+          console.log('   ⚠️ Email not verified - showing verification screen');
+          setPendingVerificationEmail(email);
+          setPassword('');
+          setShowVerificationScreen(true);
+          return;
+        }
+
         // Handle specific error messages from backend
         let errorMessage = data.error || 'Invalid email or password';
-        if (errorMessage.includes('not found') || errorMessage.includes('No user')) {
+        if (errorMessage.includes('not found') || errorMessage.includes('No user') || errorMessage.includes('No account')) {
           errorMessage = 'No account found with this email. Please sign up first.';
-        } else if (errorMessage.includes('wrong password') || errorMessage.includes('incorrect') || errorMessage.includes('Invalid credentials')) {
+        } else if (errorMessage.includes('wrong password') || errorMessage.includes('incorrect') || errorMessage.includes('Invalid credentials') || errorMessage.includes('Incorrect password')) {
           errorMessage = 'Incorrect password. Please try again.';
         } else if (errorMessage.includes('invalid email') || errorMessage.includes('Invalid email')) {
           errorMessage = 'Invalid email address format.';
@@ -1390,6 +1406,104 @@ export default function App() {
       console.error('Logout error:', error);
       Alert.alert('Error', 'Logout failed');
     }
+  };
+
+  // Email verification handlers
+  const handleResendVerification = async () => {
+    if (!pendingVerificationEmail) {
+      Alert.alert('Error', 'No email address to verify');
+      return;
+    }
+
+    setResendingVerification(true);
+    console.log('RESEND VERIFICATION:');
+    console.log('   Email:', pendingVerificationEmail);
+
+    try {
+      const response = await fetch(`${API_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ email: pendingVerificationEmail })
+      });
+
+      const data = await response.json();
+      console.log('   Response:', data.success ? 'Success' : 'Failed');
+
+      if (data.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        if (data.alreadyVerified) {
+          Alert.alert('Already Verified', 'Your email is already verified! You can now log in.');
+          setShowVerificationScreen(false);
+          setIsLogin(true);
+        } else {
+          Alert.alert('Email Sent', 'Verification email sent! Please check your inbox and spam folder.');
+        }
+      } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        Alert.alert('Error', data.error || 'Failed to send verification email');
+      }
+    } catch (error) {
+      console.error('   Error:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Error', 'Network error. Please check your internet connection.');
+    } finally {
+      setResendingVerification(false);
+    }
+  };
+
+  const handleCheckVerification = async () => {
+    if (!pendingVerificationEmail) {
+      Alert.alert('Error', 'No email address to check');
+      return;
+    }
+
+    setLoading(true);
+    console.log('CHECK VERIFICATION:');
+    console.log('   Email:', pendingVerificationEmail);
+
+    try {
+      const response = await fetch(`${API_URL}/auth/check-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ email: pendingVerificationEmail })
+      });
+
+      const data = await response.json();
+      console.log('   Verified:', data.emailVerified);
+
+      if (data.success && data.emailVerified) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert('Verified!', 'Your email has been verified. You can now log in with your password.');
+        setShowVerificationScreen(false);
+        setEmail(pendingVerificationEmail);
+        setPendingVerificationEmail('');
+        setIsLogin(true);
+      } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        Alert.alert(
+          'Not Yet Verified',
+          'Your email is not verified yet. Please click the verification link in your email.\n\nDid you check your spam folder?'
+        );
+      }
+    } catch (error) {
+      console.error('   Error:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Error', 'Network error. Please check your internet connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setShowVerificationScreen(false);
+    setPendingVerificationEmail('');
+    setIsLogin(true);
   };
 
   const handleDownloadReport = async (report, format = 'pdf') => {
@@ -1578,6 +1692,93 @@ export default function App() {
 
   // Auth Screen (Login/Register)
   if (!user) {
+    // Email Verification Screen
+    if (showVerificationScreen) {
+      return (
+        <SafeAreaView style={styles.container}>
+          <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+          <ScrollView contentContainerStyle={styles.authContent}>
+            <View style={styles.authHeader}>
+              <View style={[styles.logoContainer, { backgroundColor: COLORS.warning + '20' }]}>
+                <Ionicons name="mail-unread" size={normalize(50)} color={COLORS.warning} />
+              </View>
+              <Text style={styles.authTitle}>Verify Your Email</Text>
+              <Text style={[styles.authSubtitle, { marginTop: 10 }]}>
+                We've sent a verification link to:
+              </Text>
+              <Text style={[styles.authSubtitle, { fontWeight: 'bold', color: COLORS.primary, marginTop: 5 }]}>
+                {pendingVerificationEmail}
+              </Text>
+            </View>
+
+            <View style={styles.authForm}>
+              <View style={{
+                backgroundColor: COLORS.info + '15',
+                borderRadius: 12,
+                padding: 16,
+                marginBottom: 20,
+                borderLeftWidth: 4,
+                borderLeftColor: COLORS.info
+              }}>
+                <Text style={{ color: COLORS.text, fontSize: normalize(14), lineHeight: 22 }}>
+                  Please check your inbox and click the verification link to activate your account.{'\n\n'}
+                  Don't see the email? Check your spam or junk folder.
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.primaryButton, { backgroundColor: COLORS.success, flexDirection: 'row' }]}
+                onPress={handleCheckVerification}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <>
+                    <Ionicons name="checkmark-circle" size={20} color="#ffffff" style={{ marginRight: 8 }} />
+                    <Text style={styles.primaryButtonText}>I've Verified - Continue</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.primaryButton, {
+                  backgroundColor: 'transparent',
+                  borderWidth: 2,
+                  borderColor: COLORS.primary,
+                  marginTop: 12,
+                  flexDirection: 'row'
+                }]}
+                onPress={handleResendVerification}
+                disabled={resendingVerification}
+              >
+                {resendingVerification ? (
+                  <ActivityIndicator color={COLORS.primary} />
+                ) : (
+                  <>
+                    <Ionicons name="refresh" size={20} color={COLORS.primary} style={{ marginRight: 8 }} />
+                    <Text style={[styles.primaryButtonText, { color: COLORS.primary }]}>
+                      Resend Verification Email
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleBackToLogin}
+                style={{ marginTop: 20 }}
+              >
+                <Text style={styles.switchText}>
+                  <Ionicons name="arrow-back" size={14} color={COLORS.textMuted} /> Back to Login
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      );
+    }
+
+    // Login/Register Form
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
