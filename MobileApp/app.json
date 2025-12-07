@@ -16,6 +16,7 @@
     },
     "ios": {
       "supportsTablet": true,
+      "icon": "./assets/ios/AppIcon~ios-marketing.png",
       "bundleIdentifier": "com.flacronenterprises.flacronai",
       "buildNumber": "1.0.0",
       "infoPlist": {
@@ -25,13 +26,15 @@
       }
     },
     "android": {
-      "icon": "./assets/icon.png",
+      "icon": "./assets/android/res/mipmap-xxxhdpi/Flacron-Build.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#FF7C08"
+        "foregroundImage": "./assets/android/res/mipmap-xxxhdpi/Flacron-Build_foreground.png",
+        "backgroundImage": "./assets/android/res/mipmap-xxxhdpi/Flacron-Build_background.png",
+        "monochromeImage": "./assets/android/res/mipmap-xxxhdpi/Flacron-Build_monochrome.png"
       },
+      "playStoreUrl": "https://play.google.com/store/apps/details?id=com.flacronenterprises.flacronai",
       "package": "com.flacronenterprises.flacronai",
-      "versionCode": 2,
+      "versionCode": 4,
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",

@@ -81,6 +81,7 @@ router.post('/register', async (req, res) => {
 /**
  * POST /api/auth/login
  * Login user and create JWT token (for mobile app)
+ * Uses Firebase Auth REST API to verify password
  */
 router.post('/login', async (req, res) => {
   try {
@@ -93,23 +94,59 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Get user by email
-    let userRecord;
+    // Firebase Auth REST API endpoint for password verification
+    const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || 'AIzaSyAEtWQZaTf8czc8tLdMatYSnAUhIOyCOis';
+    const authUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`;
+
+    // Verify password using Firebase Auth REST API
+    let firebaseResponse;
     try {
-      userRecord = await getAuth().getUserByEmail(email);
-    } catch (error) {
-      if (error.code === 'auth/user-not-found') {
+      const response = await fetch(authUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          returnSecureToken: true
+        })
+      });
+
+      firebaseResponse = await response.json();
+
+      // Check for Firebase Auth errors
+      if (firebaseResponse.error) {
+        const errorCode = firebaseResponse.error.message;
+        console.log(`❌ Firebase Auth error: ${errorCode}`);
+
+        let errorMessage = 'Invalid email or password';
+
+        if (errorCode === 'EMAIL_NOT_FOUND') {
+          errorMessage = 'No account found with this email';
+        } else if (errorCode === 'INVALID_PASSWORD' || errorCode === 'INVALID_LOGIN_CREDENTIALS') {
+          errorMessage = 'Incorrect password';
+        } else if (errorCode === 'USER_DISABLED') {
+          errorMessage = 'This account has been disabled';
+        } else if (errorCode === 'TOO_MANY_ATTEMPTS_TRY_LATER') {
+          errorMessage = 'Too many failed login attempts. Please try again later.';
+        }
+
         return res.status(401).json({
           success: false,
-          error: 'Invalid email or password'
+          error: errorMessage
         });
       }
-      throw error;
+    } catch (fetchError) {
+      console.error('Firebase Auth API error:', fetchError);
+      return res.status(500).json({
+        success: false,
+        error: 'Authentication service unavailable'
+      });
     }
 
-    // Note: Firebase Admin SDK cannot verify passwords directly
-    // In production, you would use Firebase Auth REST API or client SDK
-    // For now, we'll check if user exists (password was verified during registration)
+    // Password verified! Now get user record
+    const userRecord = await getAuth().getUserByEmail(email);
 
     // Check email verification (skip for development/testing)
     if (!skipEmailVerification && !userRecord.emailVerified) {
@@ -139,7 +176,7 @@ router.post('/login', async (req, res) => {
       { expiresIn: '30d' } // Token valid for 30 days
     );
 
-    console.log(`✅ User logged in: ${email}`);
+    console.log(`✅ User logged in (password verified): ${email}`);
 
     res.json({
       success: true,
