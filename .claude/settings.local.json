@@ -93,7 +93,10 @@
       "Bash(npx shadcn@latest add:*)",
       "Bash(npx shadcn@latest init:*)",
       "Bash(git restore:*)",
-      "Bash(del MAGIC_UI_IMPLEMENTATION_COMPLETE.md MAGIC_UI_FIXES.md COMPONENT_DEBUG_GUIDE.md)"
+      "Bash(del MAGIC_UI_IMPLEMENTATION_COMPLETE.md MAGIC_UI_FIXES.md COMPONENT_DEBUG_GUIDE.md)",
+      "Bash(git checkout:*)",
+      "Bash(timeout:*)",
+      "Bash(del \"C:\\\\Users\\\\pc\\\\Desktop\\\\FlacronCV\\\\upgrade_ui.py\")"
     ],
     "deny": [],
     "ask": []

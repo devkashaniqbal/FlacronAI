@@ -39,11 +39,11 @@ const normalize = (size) => {
   return Math.round(size * scale);
 };
 
-export default function DashboardScreen({ navigation, userEmail, userName, onShowAIAssistant }) {
+export default function DashboardScreen({ navigation, userEmail, userName, onShowAIAssistant, onTabChange }) {
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({
     reportsGenerated: 0,
-    monthlyLimit: 10,
+    monthlyLimit: 1,
     totalReports: 0,
   });
 
@@ -149,19 +149,13 @@ export default function DashboardScreen({ navigation, userEmail, userName, onSho
               icon="create-outline"
               title="Generate Report"
               gradient={['#FF7C08', '#ff9533']}
-              onPress={() => navigation.navigate('Generate')}
+              onPress={() => onTabChange?.('generate')}
             />
             <QuickActionCard
               icon="folder-open-outline"
               title="My Reports"
               gradient={['#10b981', '#059669']}
-              onPress={() => navigation.navigate('Reports')}
-            />
-            <QuickActionCard
-              icon="person-outline"
-              title="Profile"
-              gradient={['#3b82f6', '#2563eb']}
-              onPress={() => navigation.navigate('Profile')}
+              onPress={() => onTabChange?.('reports')}
             />
           </View>
         </View>

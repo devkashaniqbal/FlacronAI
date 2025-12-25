@@ -81,6 +81,7 @@ export default function MainApp({ navigation }) {
       navigation,
       onShowAIAssistant: handleShowAIAssistant,
       onLogout: handleLogout,
+      onTabChange: setCurrentTab,
     };
 
     switch (currentTab) {
