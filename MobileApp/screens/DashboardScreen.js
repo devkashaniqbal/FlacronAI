@@ -10,172 +10,165 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { AIAssistantBubble } from '../components/AIAssistant';
-import AnimatedBlobBackground from '../components/AnimatedBlobBackground';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const COLORS = {
-  primary: '#FF7C08',
-  primaryDark: '#ff9533',
-  secondary: '#1f2937',
-  background: '#FFFFFF',
-  surface: '#FFFFFF',
-  text: '#1f2937',
-  textSecondary: '#6b7280',
-  textMuted: '#9ca3af',
-  border: '#e5e7eb',
-  success: '#10b981',
-  warning: '#f59e0b',
-  error: '#ef4444',
-  info: '#3b82f6',
+  orange: '#FF7C08',
+  orangeLight: '#ff9533',
+  white: '#FFFFFF',
+  backgroundGray: '#F5F5F5',
+  textDark: '#2D2D2D',
+  textGray: '#7A7A7A',
+  textLight: '#A0A0A0',
+  cardBorder: '#EEEEEE',
+  iconBgPeach: '#FFE8D6',
+  iconBgMint: '#D4F4E8',
+  iconBgYellow: '#FFF4D6',
 };
 
-const normalize = (size) => {
-  const scale = SCREEN_WIDTH / 375;
-  return Math.round(size * scale);
-};
-
-export default function DashboardScreen({ navigation, userEmail, userName, onShowAIAssistant, onTabChange }) {
+export default function DashboardScreen({ userEmail, userName, onShowAIAssistant, onTabChange }) {
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState({
-    reportsGenerated: 0,
+    usedThisMonth: 0,
     monthlyLimit: 1,
     totalReports: 0,
   });
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // Fetch user stats from API
     setTimeout(() => setRefreshing(false), 1000);
   };
 
-  const QuickActionCard = ({ icon, title, color, onPress, gradient }) => (
-    <TouchableOpacity
-      style={styles.actionCard}
-      onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        onPress();
-      }}
-      activeOpacity={0.8}
-    >
-      <LinearGradient
-        colors={gradient || [color, color]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.actionGradient}
-      >
-        <View style={styles.actionIconContainer}>
-          <Ionicons name={icon} size={normalize(32)} color="#FFFFFF" />
-        </View>
-        <Text style={styles.actionText}>{title}</Text>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-
-      {/* Animated Background */}
-      <AnimatedBlobBackground />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
 
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Welcome back,</Text>
-          <Text style={styles.userName}>{userName || userEmail?.split('@')[0] || 'User'}</Text>
+        <View style={styles.headerTop}>
+          <Text style={styles.logo}>FlacronAI</Text>
+          <TouchableOpacity style={styles.chatButton}>
+            <Ionicons name="chatbubble-ellipses" size={24} color={COLORS.textDark} />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.notificationButton}
-          onPress={() => navigation.navigate('NotificationSettings')}
-        >
-          <Ionicons name="notifications-outline" size={24} color={COLORS.text} />
-          <View style={styles.notificationBadge}>
-            <Text style={styles.badgeText}>3</Text>
-          </View>
-        </TouchableOpacity>
       </View>
 
       <ScrollView
-        style={styles.content}
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={COLORS.primary}
-            colors={[COLORS.primary]}
+            tintColor={COLORS.orange}
+            colors={[COLORS.orange]}
           />
         }
       >
-        {/* Stats Card */}
-        <View style={styles.statsCard}>
-          <LinearGradient
-            colors={['#FF7C08', '#ff9533']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.statsGradient}
-          >
-            <Text style={styles.statsTitle}>Usage Overview</Text>
-            <View style={styles.statsGrid}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{stats.reportsGenerated}</Text>
-                <Text style={styles.statLabel}>This Month</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{stats.monthlyLimit}</Text>
-                <Text style={styles.statLabel}>Monthly Limit</Text>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{stats.totalReports}</Text>
-                <Text style={styles.statLabel}>Total Reports</Text>
-              </View>
+        {/* Welcome Section */}
+        <View style={styles.welcomeSection}>
+          <View>
+            <Text style={styles.welcomeText}>Welcome back,</Text>
+            <Text style={styles.userName}>{userName || 'Tesr'}</Text>
+          </View>
+          <TouchableOpacity>
+            <Ionicons name="notifications-outline" size={28} color={COLORS.textDark} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Usage Overview Card */}
+        <View style={styles.usageCard}>
+          <View style={styles.usageHeader}>
+            <Text style={styles.usageTitle}>Usage Overview</Text>
+            <View style={styles.starterBadge}>
+              <Ionicons name="trophy" size={14} color={COLORS.white} />
+              <Text style={styles.starterText}>Starter</Text>
             </View>
-          </LinearGradient>
+          </View>
+
+          <View style={styles.statsRow}>
+            {/* Used this month */}
+            <View style={styles.statItem}>
+              <View style={[styles.statIcon, { backgroundColor: COLORS.iconBgPeach }]}>
+                <Ionicons name="document-text" size={28} color={COLORS.orange} />
+              </View>
+              <Text style={styles.statNumber}>{stats.usedThisMonth}</Text>
+              <Text style={styles.statLabel}>Used this month</Text>
+            </View>
+
+            {/* Vertical Divider */}
+            <View style={styles.statDivider} />
+
+            {/* Monthly limit */}
+            <View style={styles.statItem}>
+              <View style={[styles.statIcon, { backgroundColor: COLORS.iconBgMint }]}>
+                <Ionicons name="checkmark-circle" size={28} color="#10B981" />
+              </View>
+              <Text style={styles.statNumber}>{stats.monthlyLimit}</Text>
+              <Text style={styles.statLabel}>Monthly limit</Text>
+            </View>
+
+            {/* Vertical Divider */}
+            <View style={styles.statDivider} />
+
+            {/* Total reports */}
+            <View style={styles.statItem}>
+              <View style={[styles.statIcon, { backgroundColor: COLORS.iconBgYellow }]}>
+                <Ionicons name="calendar" size={28} color="#F59E0B" />
+              </View>
+              <Text style={styles.statNumber}>{stats.totalReports}</Text>
+              <Text style={styles.statLabel}>Total reports</Text>
+            </View>
+          </View>
         </View>
 
         {/* Quick Actions */}
-        <View style={styles.section}>
+        <View style={styles.quickActionsSection}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.actionsGrid}>
-            <QuickActionCard
-              icon="create-outline"
-              title="Generate Report"
-              gradient={['#FF7C08', '#ff9533']}
-              onPress={() => onTabChange?.('generate')}
-            />
-            <QuickActionCard
-              icon="folder-open-outline"
-              title="My Reports"
-              gradient={['#10b981', '#059669']}
-              onPress={() => onTabChange?.('reports')}
-            />
+          <View style={styles.quickActionsGrid}>
+            {/* Generate Report Card */}
+            <TouchableOpacity
+              style={[styles.actionCard, { marginRight: 12 }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onTabChange?.('generate');
+              }}
+              activeOpacity={0.9}
+            >
+              <View style={styles.actionIcon}>
+                <Ionicons name="add-circle" size={48} color={COLORS.white} />
+              </View>
+              <Text style={styles.actionTitle}>Generate Report</Text>
+              <Text style={styles.actionSubtitle}>Create new inspection</Text>
+            </TouchableOpacity>
+
+            {/* My Reports Card */}
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onTabChange?.('reports');
+              }}
+              activeOpacity={0.9}
+            >
+              <View style={styles.actionIcon}>
+                <Ionicons name="folder-open" size={48} color={COLORS.white} />
+              </View>
+              <Text style={styles.actionTitle}>My Reports</Text>
+              <Text style={styles.actionSubtitle}>View all reports</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Recent Activity */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          <View style={styles.activityCard}>
-            <View style={styles.emptyState}>
-              <Ionicons name="document-text-outline" size={normalize(48)} color={COLORS.textMuted} />
-              <Text style={styles.emptyText}>No recent activity</Text>
-              <Text style={styles.emptySubtext}>Generate your first report to get started!</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={{ height: 100 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* AI Assistant Bubble */}
+      {/* AI Assistant Floating Button */}
       <AIAssistantBubble onPress={onShowAIAssistant} />
     </View>
   );
@@ -184,165 +177,165 @@ export default function DashboardScreen({ navigation, userEmail, userName, onSho
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.backgroundGray,
   },
   header: {
+    backgroundColor: COLORS.white,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 16 : 50,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.cardBorder,
+  },
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + 20 : 60,
-    paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
-    zIndex: 10,
   },
-  greeting: {
-    fontSize: normalize(14),
-    color: COLORS.textSecondary,
-    fontWeight: '500',
-  },
-  userName: {
-    fontSize: normalize(24),
+  logo: {
+    fontSize: 28,
     fontWeight: '700',
-    color: COLORS.text,
-    marginTop: 4,
+    color: COLORS.orange,
   },
-  notificationButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#f9fafb',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: COLORS.error,
+  chatButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  content: {
+  scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 20,
+    paddingTop: 20,
   },
-  statsCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginBottom: 24,
-    shadowColor: '#FF7C08',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  statsGradient: {
-    padding: 24,
-  },
-  statsTitle: {
-    fontSize: normalize(16),
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 16,
-  },
-  statsGrid: {
+  welcomeSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  welcomeText: {
+    fontSize: 16,
+    color: COLORS.textGray,
+    fontWeight: '400',
+  },
+  userName: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: COLORS.textDark,
+    marginTop: 4,
+  },
+  usageCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  usageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  usageTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.textDark,
+  },
+  starterBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.orange,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  starterText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
   },
-  statValue: {
-    fontSize: normalize(28),
-    fontWeight: '800',
-    color: '#FFFFFF',
+  statIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  statNumber: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: COLORS.textDark,
+    marginBottom: 4,
   },
   statLabel: {
-    fontSize: normalize(12),
-    color: 'rgba(255, 255, 255, 0.9)',
-    marginTop: 4,
+    fontSize: 13,
+    color: COLORS.textGray,
+    textAlign: 'center',
     fontWeight: '500',
   },
   statDivider: {
     width: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    marginHorizontal: 16,
+    height: 60,
+    backgroundColor: COLORS.cardBorder,
+    marginHorizontal: 8,
   },
-  section: {
-    marginBottom: 32,
+  quickActionsSection: {
+    marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: normalize(20),
+    fontSize: 22,
     fontWeight: '700',
-    color: COLORS.text,
+    color: COLORS.textDark,
     marginBottom: 16,
   },
-  actionsGrid: {
+  quickActionsGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -8,
   },
   actionCard: {
-    width: '31%',
-    marginHorizontal: '1%',
-    marginBottom: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  actionGradient: {
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 120,
-  },
-  actionIconContainer: {
-    marginBottom: 12,
-  },
-  actionText: {
-    fontSize: normalize(13),
-    fontWeight: '600',
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  activityCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    flex: 1,
+    backgroundColor: COLORS.orange,
+    borderRadius: 20,
     padding: 24,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    minHeight: 180,
+    justifyContent: 'center',
+    shadowColor: COLORS.orange,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 32,
+  actionIcon: {
+    marginBottom: 16,
   },
-  emptyText: {
-    fontSize: normalize(16),
-    fontWeight: '600',
-    color: COLORS.text,
-    marginTop: 16,
+  actionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.white,
+    marginBottom: 6,
   },
-  emptySubtext: {
-    fontSize: normalize(14),
-    color: COLORS.textMuted,
-    marginTop: 8,
-    textAlign: 'center',
+  actionSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '500',
   },
 });
