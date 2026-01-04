@@ -407,6 +407,23 @@ const Dashboard = () => {
       setLoading(true);
       showNotification('Creating checkout session...', 'info');
 
+      // Validate user and token before making request
+      if (!user || !user.uid) {
+        showNotification('User not authenticated. Please log in again.', 'error');
+        console.error('User object missing or invalid:', user);
+        setLoading(false);
+        return;
+      }
+
+      if (!token) {
+        showNotification('Authentication token missing. Please log in again.', 'error');
+        console.error('Token missing');
+        setLoading(false);
+        return;
+      }
+
+      console.log('Creating checkout session for:', { tier, userId: user.uid });
+
       const response = await fetch(`${API_BASE_URL}/payment/create-checkout-session`, {
         method: 'POST',
         headers: {
@@ -415,21 +432,38 @@ const Dashboard = () => {
         },
         body: JSON.stringify({
           tier: tier,
-          userId: user?.uid
+          userId: user.uid
         })
       });
 
       const result = await response.json();
 
+      console.log('Checkout session response:', { status: response.status, result });
+
+      if (!response.ok) {
+        // Handle HTTP errors
+        if (response.status === 401) {
+          showNotification('Session expired. Please log in again.', 'error');
+          console.error('401 Unauthorized - Token may be expired or invalid');
+          // Optionally: logout and redirect to login
+          // await logout();
+          // navigate('/auth');
+        } else {
+          showNotification(result.error || `Server error: ${response.status}`, 'error');
+        }
+        return;
+      }
+
       if (result.success && result.url) {
         // Redirect to Stripe checkout
+        showNotification('Redirecting to checkout...', 'success');
         window.location.href = result.url;
       } else {
         showNotification(result.error || 'Failed to create checkout session', 'error');
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      showNotification('Failed to create checkout session', 'error');
+      showNotification('Failed to create checkout session: ' + error.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -1080,6 +1114,125 @@ const Dashboard = () => {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        </section>
+        )}
+
+        {/* Upgrade Plan Section */}
+        {currentPage === 'upgrade' && (
+        <section className="upgrade-section" id="upgrade">
+          <div className="container">
+            <h2 className="section-title">Upgrade Your Plan</h2>
+            <p className="section-subtitle">Choose the perfect plan for your insurance reporting needs</p>
+
+            {/* Current Plan Info */}
+            <div className="current-plan-banner">
+              <div className="current-plan-info">
+                <h3>Current Plan: {usageStats?.tierName || 'Starter'}</h3>
+                <p>You're currently on the {usageStats?.tierName || 'Starter'} plan with {usageStats?.remaining || 0} reports remaining this month.</p>
+              </div>
+            </div>
+
+            {/* Pricing Cards */}
+            <div className="pricing-modal-grid">
+              {/* Professional Plan */}
+              <div className="pricing-modal-card">
+                <div className="plan-badge">Most Popular</div>
+                <h3>Professional</h3>
+                <div className="plan-price">
+                  <span className="price-amount">$39.99</span>
+                  <span className="price-period">/month</span>
+                </div>
+                <ul className="plan-features">
+                  <li><i className="fas fa-check"></i> 20 reports per month</li>
+                  <li><i className="fas fa-check"></i> AI-powered report generation</li>
+                  <li><i className="fas fa-check"></i> PDF & DOCX export</li>
+                  <li><i className="fas fa-check"></i> No watermark</li>
+                  <li><i className="fas fa-check"></i> Custom logo</li>
+                  <li><i className="fas fa-check"></i> Email support</li>
+                </ul>
+                <button
+                  onClick={() => handleUpgradeCheckout('professional')}
+                  className="btn btn-primary btn-block"
+                  disabled={loading || usageStats?.tier === 'professional'}
+                >
+                  {loading ? 'Loading...' : usageStats?.tier === 'professional' ? 'Current Plan' : 'Select Professional'}
+                </button>
+              </div>
+
+              {/* Agency Plan */}
+              <div className="pricing-modal-card">
+                <div className="plan-badge">Best Value</div>
+                <h3>Agency</h3>
+                <div className="plan-price">
+                  <span className="price-amount">$99.99</span>
+                  <span className="price-period">/month</span>
+                </div>
+                <ul className="plan-features">
+                  <li><i className="fas fa-check"></i> 100 reports per month</li>
+                  <li><i className="fas fa-check"></i> 5 user accounts</li>
+                  <li><i className="fas fa-check"></i> All export formats</li>
+                  <li><i className="fas fa-check"></i> Agency dashboard</li>
+                  <li><i className="fas fa-check"></i> Custom branding</li>
+                  <li><i className="fas fa-check"></i> Priority support</li>
+                </ul>
+                <button
+                  onClick={() => handleUpgradeCheckout('agency')}
+                  className="btn btn-primary btn-block"
+                  disabled={loading || usageStats?.tier === 'agency'}
+                >
+                  {loading ? 'Loading...' : usageStats?.tier === 'agency' ? 'Current Plan' : 'Select Agency'}
+                </button>
+              </div>
+
+              {/* Enterprise Plan */}
+              <div className="pricing-modal-card">
+                <div className="plan-badge">Premium</div>
+                <h3>Enterprise</h3>
+                <div className="plan-price">
+                  <span className="price-amount">$499</span>
+                  <span className="price-period">/month</span>
+                </div>
+                <ul className="plan-features">
+                  <li><i className="fas fa-check"></i> Unlimited reports</li>
+                  <li><i className="fas fa-check"></i> Unlimited users</li>
+                  <li><i className="fas fa-check"></i> API access</li>
+                  <li><i className="fas fa-check"></i> White-label portal</li>
+                  <li><i className="fas fa-check"></i> Custom integration</li>
+                  <li><i className="fas fa-check"></i> Dedicated support</li>
+                </ul>
+                <button
+                  onClick={() => handleUpgradeCheckout('enterprise')}
+                  className="btn btn-primary btn-block"
+                  disabled={loading || usageStats?.tier === 'enterprise'}
+                >
+                  {loading ? 'Loading...' : usageStats?.tier === 'enterprise' ? 'Current Plan' : 'Contact Sales'}
+                </button>
+              </div>
+            </div>
+
+            {/* FAQ Section */}
+            <div className="upgrade-faq">
+              <h3>Frequently Asked Questions</h3>
+              <div className="faq-grid">
+                <div className="faq-item">
+                  <h4>Can I change my plan anytime?</h4>
+                  <p>Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.</p>
+                </div>
+                <div className="faq-item">
+                  <h4>What payment methods do you accept?</h4>
+                  <p>We accept all major credit cards through our secure Stripe payment gateway.</p>
+                </div>
+                <div className="faq-item">
+                  <h4>Is there a long-term commitment?</h4>
+                  <p>No, all plans are month-to-month. You can cancel anytime without penalties.</p>
+                </div>
+                <div className="faq-item">
+                  <h4>Do unused reports roll over?</h4>
+                  <p>No, report limits reset each monthly billing cycle.</p>
+                </div>
               </div>
             </div>
           </div>
