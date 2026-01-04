@@ -2,18 +2,19 @@
   "name": "frontend",
   "private": true,
   "version": "1.0.1",
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node server.js"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.2",
     "axios": "^1.12.2",
     "chart.js": "^4.5.1",
+    "express": "^4.22.1",
     "firebase": "^12.4.0",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.562.0",
