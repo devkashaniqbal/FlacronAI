@@ -82,10 +82,10 @@ async function generateDOCX(reportData, aiContent) {
         properties: {
           page: {
             margin: {
-              top: 360,  // 0.25 inch - minimal margin
-              right: 360,  // 0.25 inch
-              bottom: 360,  // 0.25 inch
-              left: 360  // 0.25 inch - no visible gap
+              top: 720,  // 0.5 inch
+              right: 720,
+              bottom: 720,
+              left: 720
             }
           }
         },
@@ -315,24 +315,10 @@ function isPreambleText(text) {
     'i have created',
     'i\'ve created',
     'this is the',
-    'as requested',
-    'do not include',
-    'stick to the facts',
-    'avoid subjective',
-    'focus on factual',
-    'maintain objectivity',
-    'be objective',
-    'assume you have',
-    'assume that you',
-    'ensure the report',
-    'ensure that the',
-    'make sure the report',
-    'make sure that',
-    'remember to',
-    'be sure to'
+    'as requested'
   ];
   const lower = text.toLowerCase();
-  return preamblePhrases.some(phrase => lower.includes(phrase));
+  return preamblePhrases.some(phrase => lower.startsWith(phrase));
 }
 
 /**
@@ -498,7 +484,7 @@ function generatePDF(reportData, aiContent) {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({
-        margin: 0,  // Zero margin to maximize content space
+        margin: 50,  // Reduced to 0.69 inch for more horizontal space
         size: 'LETTER',
         bufferPages: true  // Enable page numbering
       });
@@ -541,7 +527,7 @@ function generatePDF(reportData, aiContent) {
       const infoBoxY = doc.y;
       const pageWidth = doc.page.width;
       const boxWidth = pageWidth - (doc.page.margins.left + doc.page.margins.right);
-      const contentPadding = 5;  // Minimal padding - no visible gap
+      const contentPadding = 20;  // Standard professional padding
 
       // Draw background box for info section
       doc.rect(doc.page.margins.left, infoBoxY, boxWidth, 150)
@@ -636,9 +622,9 @@ function generatePDF(reportData, aiContent) {
          .font('Helvetica')
          .text(new Date().toLocaleDateString(), leftCol + 70, row4Y);
 
-      // Move past the info box with proper spacing to prevent overlap
-      doc.y = infoBoxY + 170;  // Increased from 160 to 170 to prevent text overlap
-      doc.moveDown(0.5);  // Reduced from 1 to 0.5 for tighter spacing
+      // Move past the info box
+      doc.y = infoBoxY + 160;
+      doc.moveDown(1);
 
       // Content Section Header
       doc.fontSize(12)
@@ -656,7 +642,24 @@ function generatePDF(reportData, aiContent) {
 
       doc.moveDown(0.8);
 
-      // Just render the content simply - no fancy boxes or tables
+      // Extract and display Executive Summary first (if exists)
+      const executiveSummary = extractExecutiveSummary(aiContent);
+      if (executiveSummary) {
+        drawExecutiveSummary(doc, executiveSummary);
+      }
+
+      // Parse and display Cost Estimate table
+      const { costItems, totalCost } = parseCostEstimate(aiContent);
+      if (costItems.length > 0) {
+        doc.fontSize(11)
+           .fillColor('#0d6efd')
+           .font('Helvetica-Bold')
+           .text('COST ESTIMATE');
+        doc.moveDown(0.5);
+        drawCostEstimateTable(doc, costItems, totalCost);
+      }
+
+      // Clean and format the content
       formatPDFContent(doc, aiContent);
 
       // Add page numbers and headers to all pages
@@ -664,7 +667,25 @@ function generatePDF(reportData, aiContent) {
       for (let i = 0; i < pageCount; i++) {
         doc.switchToPage(i);
 
-        // No header on subsequent pages
+        // Header on every page (except first)
+        if (i > 0) {
+          doc.fontSize(9)
+             .fillColor('#FF7C08')
+             .font('Helvetica-Bold')
+             .text('FLACRONAI', 50, 30, { align: 'left' });
+
+          doc.fontSize(8)
+             .fillColor('#0d6efd')
+             .font('Helvetica')
+             .text(`Claim #: ${reportData.claimNumber || 'N/A'}`, 50, 45, { align: 'left' });
+
+          // Draw header line
+          doc.moveTo(50, 60)
+             .lineTo(doc.page.width - 50, 60)
+             .strokeColor('#dee2e6')
+             .lineWidth(0.5)
+             .stroke();
+        }
 
         // Footer with page numbers on every page
         const footerY = doc.page.height - 50;
@@ -672,17 +693,17 @@ function generatePDF(reportData, aiContent) {
         doc.fontSize(8)
            .fillColor('#888888')
            .font('Helvetica')
-           .text(`Page ${i + 1} of ${pageCount}`, doc.page.margins.left, footerY, {
+           .text(`Page ${i + 1} of ${pageCount}`, 50, footerY, {
              align: 'center',
-             width: doc.page.width - (doc.page.margins.left + doc.page.margins.right)
+             width: doc.page.width - 100
            });
 
         doc.fontSize(7)
            .fillColor('#888888')
            .font('Helvetica-Oblique')
-           .text('Generated with FlacronAI - https://flacronai.com', doc.page.margins.left, footerY + 12, {
+           .text('Generated with FlacronAI - https://flacronai.com', 50, footerY + 12, {
              align: 'center',
-             width: doc.page.width - (doc.page.margins.left + doc.page.margins.right)
+             width: doc.page.width - 100
            });
       }
 
@@ -796,7 +817,7 @@ function drawCostEstimateTable(doc, costItems, totalCost) {
      .text(`$${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
            costX + 10, currentY + 8, { width: 80, align: 'right' });
 
-  doc.y = currentY + rowHeight + 8;  // Reduced from 15 to 8 for tighter spacing after table
+  doc.y = currentY + rowHeight + 15;
 }
 
 /**
@@ -839,7 +860,7 @@ function drawExecutiveSummary(doc, summaryText) {
        lineGap: 3
      });
 
-  doc.y = boxY + boxHeight + 8;  // Reduced from 15 to 8 for tighter spacing after summary box
+  doc.y = boxY + boxHeight + 15;
 }
 
 /**
@@ -946,46 +967,11 @@ function renderMarkdownTextPDF(doc, text, options = {}) {
 }
 
 /**
- * Strip sections that are already rendered elsewhere to prevent duplication
- */
-function stripAlreadyRenderedSections(aiContent) {
-  const forbiddenSections = [
-    'EXECUTIVE SUMMARY',
-    'COST ESTIMATE',
-    'ESTIMATED COST',
-    'CLAIM INFORMATION',
-    'REPORT INFORMATION'
-  ];
-
-  const lines = aiContent.split('\n');
-  let cleaned = [];
-  let skip = false;
-
-  for (const line of lines) {
-    const upper = line.trim().toUpperCase();
-
-    if (forbiddenSections.some(h => upper.startsWith(h))) {
-      skip = true;
-      continue;
-    }
-
-    if (skip && upper.match(/^[A-Z][A-Z\s]+:?$/)) {
-      skip = false;
-    }
-
-    if (!skip) cleaned.push(line);
-  }
-
-  return cleaned.join('\n');
-}
-
-/**
  * Format PDF content with proper headings, bullets, and formatting
  */
 function formatPDFContent(doc, aiContent) {
-  // Strip already-rendered sections to prevent duplication
-  const safeAIContent = stripAlreadyRenderedSections(aiContent);
-  const lines = safeAIContent.split('\n');
+  // Don't clean markdown - preserve formatting
+  const lines = aiContent.split('\n');
 
   const sectionHeaders = [
     'REMARKS', 'RISK', 'ITV', 'OCCURRENCE', 'COVERAGE', 'DWELLING DAMAGE',
@@ -995,58 +981,16 @@ function formatPDFContent(doc, aiContent) {
     'ROOF', 'EXTERIOR', 'INTERIOR', 'OTHER STRUCTURES', 'EXPERTS',
     'OFFICIAL REPORTS', 'ACTION PLAN', 'DIARY DATE', 'MORTGAGEE',
     'INSURABLE INTEREST', 'ALE / FMV CLAIM', 'SUBROGATION / SALVAGE',
-    'WORK TO BE COMPLETED / RECOMMENDATION', 'PROPERTY DETAILS', 'LOSS DESCRIPTION',
-    'SCOPE OF DAMAGE', 'DAMAGE ASSESSMENT', 'RECOMMENDATIONS', 'CONCLUSION',
-    'EXECUTIVE SUMMARY', 'CLAIM INFORMATION'
+    'WORK TO BE COMPLETED / RECOMMENDATION'
   ];
 
   let skipPreamble = true;
-  const renderedSections = new Set();  // Track which sections we've already rendered to prevent duplicates
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
 
     // Skip empty lines
     if (!line || line === '---' || line === '___') {
-      doc.moveDown(0.15);  // Reduced from 0.3 to 0.15 for tighter spacing
-      continue;
-    }
-
-    // Convert markdown headings to section headers (but skip generic ones like "# INSURANCE CLAIM REPORT")
-    const markdownHeadingMatch = line.match(/^(#+)\s+(.+)$/);
-    if (markdownHeadingMatch) {
-      const headingText = markdownHeadingMatch[2].trim();
-      const upperHeading = headingText.toUpperCase();
-
-      // Skip generic report title headings
-      if (upperHeading === 'INSURANCE CLAIM REPORT' || upperHeading === 'INSPECTION REPORT') {
-        continue;
-      }
-
-      // Convert to section header
-      const normalizedHeader = upperHeading;
-
-      // Skip duplicate sections
-      if (renderedSections.has(normalizedHeader)) {
-        continue;
-      }
-
-      renderedSections.add(normalizedHeader);
-      skipPreamble = false;
-
-      doc.moveDown(0.4);
-      doc.fontSize(12)
-         .fillColor('#0d6efd')
-         .font('Helvetica-Bold')
-         .text(headingText);
-
-      const headerLineY = doc.y + 3;
-      doc.moveTo(doc.page.margins.left, headerLineY)
-         .lineTo(doc.page.width - doc.page.margins.right, headerLineY)
-         .strokeColor('#dee2e6')
-         .lineWidth(0.5)
-         .stroke();
-
       doc.moveDown(0.3);
       continue;
     }
@@ -1059,18 +1003,12 @@ function formatPDFContent(doc, aiContent) {
     // Check if it's a bullet point (*, -, or + at start)
     const bulletMatch = line.match(/^[\*\-\+]\s+(.+)$/);
     if (bulletMatch) {
-      const bulletText = bulletMatch[1];
-
-      // Skip if it's an AI instruction bullet
-      if (isPreambleText(bulletText)) {
-        continue;
-      }
-
       skipPreamble = false;
+      const bulletText = bulletMatch[1];
       doc.fontSize(10).fillColor('#000000').font('Helvetica');
-      doc.text('• ', { continued: true });
-      renderMarkdownTextPDF(doc, bulletText, { indent: 0, lineGap: 1 });
-      doc.moveDown(0.05);
+      doc.text('• ', { continued: false });
+      renderMarkdownTextPDF(doc, bulletText, { indent: 15, lineGap: 2 });
+      doc.moveDown(0.1);
       continue;
     }
 
@@ -1081,8 +1019,8 @@ function formatPDFContent(doc, aiContent) {
       const number = numberMatch[1];
       const listText = numberMatch[2];
 
-      // Check if this is in a Recommendation section (look back further to catch all items)
-      const isRecommendation = i > 0 && lines.slice(Math.max(0, i - 30), i).some(prevLine =>
+      // Check if this is in a Recommendation section
+      const isRecommendation = i > 0 && lines.slice(Math.max(0, i - 10), i).some(prevLine =>
         prevLine.trim().match(/RECOMMENDATION|ACTION PLAN|WORK TO BE COMPLETED/i)
       );
 
@@ -1101,23 +1039,16 @@ function formatPDFContent(doc, aiContent) {
            .text(badge.text, doc.page.margins.left + 5, badgeY + 4, { width: 75, align: 'center' });
 
         doc.y = badgeY;
-        doc.fontSize(10).fillColor('#000000')
-           .font('Helvetica-Bold')
-           .text(`${number}. `, doc.page.margins.left + 95, doc.y, { continued: true });
-
-        doc.font('Helvetica');
-        renderMarkdownTextPDF(doc, listText, { indent: 0, lineGap: 1 });
+        doc.fontSize(10).fillColor('#000000').font('Helvetica');
+        doc.text(`${number}. `, doc.page.margins.left + 95, doc.y, { continued: false });
+        renderMarkdownTextPDF(doc, listText, { indent: 115, lineGap: 2 });
       } else {
-        // Carrier-grade inline numbering
-        doc.fontSize(10).fillColor('#000000')
-           .font('Helvetica-Bold')
-           .text(`${number}. `, { continued: true });
-
-        doc.font('Helvetica');
-        renderMarkdownTextPDF(doc, listText, { indent: 0, lineGap: 1 });
+        doc.fontSize(10).fillColor('#000000').font('Helvetica');
+        doc.text(`${number}. `, { continued: false });
+        renderMarkdownTextPDF(doc, listText, { indent: 20, lineGap: 2 });
       }
 
-      doc.moveDown(0.05);  // Reduced from 0.1 to 0.05 for tighter list spacing
+      doc.moveDown(0.1);
       continue;
     }
 
@@ -1141,32 +1072,8 @@ function formatPDFContent(doc, aiContent) {
     if (isHeader) {
       // Remove ## markdown symbols if present
       const headerText = cleanedForHeader.replace(/^##\s*/, '');
-      const normalizedHeader = headerText.toUpperCase().trim();
 
-      // Skip duplicate sections (like duplicate "Executive Summary" or "Claim Information")
-      if (renderedSections.has(normalizedHeader)) {
-        // Skip until we find the next section header
-        let skipUntilNextSection = true;
-        while (i < lines.length - 1 && skipUntilNextSection) {
-          i++;
-          const nextLine = lines[i].trim();
-          const nextCleaned = nextLine.replace(/\*\*/g, '');
-          const nextIsHeader = nextLine.startsWith('##') ||
-                              (nextCleaned === nextCleaned.toUpperCase() &&
-                               nextCleaned.length > 3 &&
-                               sectionHeaders.some(h => nextCleaned === h));
-          if (nextIsHeader) {
-            i--; // Go back one so the next iteration processes this header
-            skipUntilNextSection = false;
-          }
-        }
-        continue;
-      }
-
-      // Mark this section as rendered
-      renderedSections.add(normalizedHeader);
-
-      doc.moveDown(0.4);  // Reduced from 0.7 to 0.4 for tighter spacing before section headers
+      doc.moveDown(0.7);
       doc.fontSize(12)
          .fillColor('#0d6efd')
          .font('Helvetica-Bold')
@@ -1180,21 +1087,21 @@ function formatPDFContent(doc, aiContent) {
          .lineWidth(0.5)
          .stroke();
 
-      doc.moveDown(0.3);  // Reduced from 0.5 to 0.3 for tighter spacing after section headers
+      doc.moveDown(0.5);
     }
     // Check if it's a subsection (ends with :)
     else if (line.endsWith(':') && line.length < 80) {
       const cleanedSubsection = line.replace(/\*\*/g, '');
-      doc.moveDown(0.25);  // Reduced from 0.4 to 0.25 for tighter spacing before subsections
+      doc.moveDown(0.4);
       doc.fontSize(10)
          .fillColor('#333333')
          .font('Helvetica-Bold')
          .text(cleanedSubsection);
-      doc.moveDown(0.15);  // Reduced from 0.2 to 0.15 for tighter spacing after subsections
+      doc.moveDown(0.2);
     }
     // Regular paragraph with markdown parsing
     else {
-      renderMarkdownTextPDF(doc, line, { lineGap: 1 });  // Reduced from 2 to 1 for tighter line spacing
+      renderMarkdownTextPDF(doc, line, { lineGap: 2 });
     }
   }
 }
