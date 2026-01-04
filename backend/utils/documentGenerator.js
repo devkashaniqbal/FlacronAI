@@ -622,9 +622,9 @@ function generatePDF(reportData, aiContent) {
          .font('Helvetica')
          .text(new Date().toLocaleDateString(), leftCol + 70, row4Y);
 
-      // Move past the info box
-      doc.y = infoBoxY + 160;
-      doc.moveDown(1);
+      // Move past the info box with proper spacing to prevent overlap
+      doc.y = infoBoxY + 170;  // Increased from 160 to 170 to prevent text overlap
+      doc.moveDown(0.5);  // Reduced from 1 to 0.5 for tighter spacing
 
       // Content Section Header
       doc.fontSize(12)
@@ -993,6 +993,11 @@ function formatPDFContent(doc, aiContent) {
     if (!line || line === '---' || line === '___') {
       doc.moveDown(0.15);  // Reduced from 0.3 to 0.15 for tighter spacing
       continue;
+    }
+
+    // Skip lines that start with # (markdown headings that are decorative)
+    if (line.match(/^#+\s*[A-Z\s]+$/)) {
+      continue;  // Skip standalone markdown headings like "# INSURANCE CLAIM REPORT"
     }
 
     // Skip preamble text
