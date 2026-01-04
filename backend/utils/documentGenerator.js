@@ -987,11 +987,17 @@ function formatPDFContent(doc, aiContent) {
     'ROOF', 'EXTERIOR', 'INTERIOR', 'OTHER STRUCTURES', 'EXPERTS',
     'OFFICIAL REPORTS', 'ACTION PLAN', 'DIARY DATE', 'MORTGAGEE',
     'INSURABLE INTEREST', 'ALE / FMV CLAIM', 'SUBROGATION / SALVAGE',
-    'WORK TO BE COMPLETED / RECOMMENDATION'
+    'WORK TO BE COMPLETED / RECOMMENDATION', 'PROPERTY DETAILS', 'LOSS DESCRIPTION',
+    'SCOPE OF DAMAGE', 'DAMAGE ASSESSMENT', 'RECOMMENDATIONS', 'CONCLUSION',
+    'EXECUTIVE SUMMARY', 'CLAIM INFORMATION'
   ];
 
   let skipPreamble = true;
   const renderedSections = new Set();  // Track which sections we've already rendered to prevent duplicates
+
+  // Pre-mark sections that are rendered elsewhere (Executive Summary in blue box, Claim Info already shown)
+  renderedSections.add('EXECUTIVE SUMMARY');
+  renderedSections.add('CLAIM INFORMATION');
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
