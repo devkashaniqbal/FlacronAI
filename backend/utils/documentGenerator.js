@@ -323,7 +323,13 @@ function isPreambleText(text) {
     'maintain objectivity',
     'be objective',
     'assume you have',
-    'assume that you'
+    'assume that you',
+    'ensure the report',
+    'ensure that the',
+    'make sure the report',
+    'make sure that',
+    'remember to',
+    'be sure to'
   ];
   const lower = text.toLowerCase();
   return preamblePhrases.some(phrase => lower.includes(phrase));
