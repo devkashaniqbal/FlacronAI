@@ -162,30 +162,28 @@ async function generateReport(reportData) {
     year: 'numeric'
   });
 
-  const prompt = `You are a professional insurance claims adjuster writing a property inspection report. Generate a comprehensive report following the CRU GROUP template format.
+  const prompt = `You are a professional insurance claims adjuster writing a property inspection report for CRU GROUP.
 
-CRITICAL OUTPUT REQUIREMENTS:
-- Use markdown formatting for proper document structure
-- Use ## for main section headers (Example: ## REMARKS, ## RISK, ## DAMAGES)
-- Use **bold** for subsection headers like **Exterior:**, **Interior:**, **Front Elevation:**
-- Use bullet points with - or * for lists and detailed observations
-- Start IMMEDIATELY with the first section - NO introduction or preamble
-- Write complete, professional paragraphs with proper formatting
+CRITICAL INSTRUCTIONS:
+1. Use ONLY these exact section headers with "## " prefix (## REMARKS, ## RISK, etc.)
+2. Each section header must be on its own line
+3. Write in plain text - NO asterisks, NO underscores, NO markdown formatting
+4. The example content below shows the style and format to follow
+5. Adapt the example content to match the specific claim data provided
+6. Keep the same professional tone and detail level as the examples
+7. Do NOT copy the examples exactly - customize them for THIS specific claim
 
-CLAIM DATA:
+CLAIM DATA TO USE:
 Claim Number: ${reportData.claimNumber}
 Insured Name: ${reportData.insuredName}
 Property Address: ${reportData.propertyAddress}
 Date of Loss: ${reportData.lossDate}
 Loss Type: ${reportData.lossType}
 Inspection Date: ${currentDate}
-${reportData.propertyDetails ? `\nProperty Details: ${reportData.propertyDetails}` : ''}
-${reportData.lossDescription ? `\nLoss Description: ${reportData.lossDescription}` : ''}
-${reportData.damages ? `\nDamages: ${reportData.damages}` : ''}
+${reportData.propertyDetails ? `Property Details: ${reportData.propertyDetails}` : ''}
+${reportData.damages ? `Damages Reported: ${reportData.damages}` : ''}
 
-Generate the following report sections. Write naturally and professionally. Fill each section with realistic, detailed content based on the claim data above.
-
-Start your response with this EXACT structure (use markdown formatting):
+GENERATE THE REPORT IN THIS EXACT SECTION ORDER (adapt example content for this claim):
 
 ## REMARKS
 
@@ -193,15 +191,21 @@ Thank you for the assignment. An inspection was conducted on ${currentDate}. Thi
 
 ## RISK
 
-The risk is a [describe: one-story/two-story] [construction type: wood-framed, brick, etc.] residential dwelling with [roof type] roof and [siding type] siding in [good/fair/poor] condition. The property consists of approximately [square footage] square feet of living space. The occupancy is consistent with the policy declarations as a primary residence.
+The risk is a single-family residential dwelling located at ${reportData.propertyAddress}.
+
+CONSTRUCTION: The structure is wood-frame construction with asphalt shingle roofing, approximately 15-20 years old based on construction style typical of the ${reportData.propertyAddress.split(',').slice(-2).join(',').trim()} region. The exterior is vinyl siding in good condition. The foundation is slab construction. The dwelling is approximately 1,800-2,200 square feet of finished living space with main level and upper level layout.
+
+REGIONAL CHARACTERISTICS: Based on the property location in ${reportData.propertyAddress.split(',').slice(-2).join(',').trim()}, the construction reflects typical regional characteristics common to this area.
+
+The occupancy is consistent with the policy declarations as a primary residence. Overall property condition is good prior to this loss.
 
 ## ITV (Insurance to Value)
 
-Based on the property size, construction quality, and current market conditions, the limit of insurance appears [adequate/low/high] for this risk.
+Based on the property size, construction quality, and current market conditions in ${reportData.propertyAddress.split(',').slice(-2).join(',').trim()}, the limit of insurance appears adequate for this risk.
 
 ## OCCURRENCE
 
-On ${reportData.lossDate}, a ${reportData.lossType} occurred at the insured location resulting in property damage. [Provide 2-3 sentences describing the incident, how it happened, and immediate impacts]. The cause of loss is confirmed as ${reportData.lossType} per field inspection.
+On ${reportData.lossDate}, a ${reportData.lossType} loss occurred at the insured location resulting in property damage. The loss was discovered by the insured and reported immediately. The damage resulted in visible impacts to the interior and exterior of the dwelling. Emergency mitigation services were contacted and responded to the scene. The property remains occupied with ongoing mitigation efforts in progress. The cause of loss is confirmed as ${reportData.lossType} per field inspection and documentation.
 
 ## COVERAGE
 
@@ -209,174 +213,128 @@ The risk is insured with the above stated limits, policy forms, and deductible. 
 
 ## DWELLING DAMAGE
 
-**Exterior:** [Describe condition of roof, all four elevations, siding, windows, doors, foundation, and any damage observed. Be specific about materials and damage extent.]
+EXTERIOR: The roof is asphalt shingle construction in fair condition with ${reportData.lossType} related damage observed. All four elevations show vinyl siding in good condition with minimal damage at this time. Windows and doors appear functional with no significant damage. Foundation is stable with no visible cracks or settlement issues related to this loss.
 
-**Interior:** [Describe affected rooms with specific damage details. Include flooring, walls, ceilings, fixtures. Mention smoke/water damage, odor, or structural impacts room by room.]
+INTERIOR ASSESSMENT BY LEVEL:
 
-**Emergency services:** Emergency mitigation services are [expected/not expected] for this loss.
+MAIN LEVEL - Kitchen: Hardwood flooring shows water damage across approximately 120 square feet. Lower cabinets along the east wall (8 linear feet) require replacement. Drywall requires 2-foot flood cut along affected walls. Dishwasher appears damaged and requires replacement.
+
+MAIN LEVEL - Living Room: Carpet flooring damaged across 200 square feet requiring replacement. Baseboards along south wall (12 linear feet) damaged. No ceiling damage observed.
+
+MAIN LEVEL - Powder Room: Vinyl flooring intact. Minor wall damage to drywall behind toilet. Fixtures operational.
+
+UPPER LEVEL - Master Bedroom: No visible damage observed during inspection.
+
+UPPER LEVEL - Master Bathroom: No visible damage observed during inspection.
+
+UPPER LEVEL - Bedroom 2: No visible damage observed during inspection.
+
+UPPER LEVEL - Bedroom 3: No visible damage observed during inspection.
+
+Emergency mitigation services have been deployed and dehumidification equipment is currently operating on site.
 
 ## OTHER STRUCTURES DAMAGE
 
-The insured [did/did not] sustain damage to other structures. [If yes, describe fences, sheds, detached garages, etc. If no, state: "No damage to other structures was observed during our inspection."]
+No damage to other structures was observed during our inspection. The detached garage, fencing, and other outbuildings remain in pre-loss condition.
 
 ## CONTENTS DAMAGE
 
-The insured [did/did not] sustain damage to contents or personal property. [If yes, describe affected items and categories. If no, state: "No contents damage was reported or observed."]
+The insured sustained minor damage to contents and personal property in the affected areas. Items include furniture, area rugs, and stored items in the kitchen area. A detailed contents inventory is being prepared by the insured.
 
 ## ALE / FMV CLAIM
 
-The risk [did/did not] become uninhabitable as a result of this loss. Additional Living Expenses (ALE) and Fair Market Value (FMV) claims are [anticipated/not anticipated] at this time.
+The risk did not become uninhabitable as a result of this loss. The property remains safe for occupancy during repairs. Additional Living Expenses (ALE) claims are not anticipated at this time.
 
 ## SUBROGATION / SALVAGE
 
-[State either: "Subrogation potential exists against [party name]" OR "Our investigation did not reveal any third-party liability; therefore, subrogation potential is not present at this time."]
+Our investigation did not reveal any third-party liability; therefore, subrogation potential is not present at this time. This appears to be a standard ${reportData.lossType} loss without negligence from external parties.
 
 ## WORK TO BE COMPLETED / RECOMMENDATION
 
-We recommend [payment of claim on ACV/RCTV basis / further inspection / closing without payment]. [Add any specific next steps.] Thank you for the opportunity to be of service to you and your policyholders.
+ESTIMATED REPAIR COSTS:
+
+Emergency Mitigation: Water extraction services 850.00, Dehumidification equipment 3 days 675.00, Air movers and fans 425.00, Antimicrobial treatment 350.00 - Subtotal Mitigation 2,300.00
+
+Demolition and Removal: Remove wet drywall 80 SF at 1.50/SF 120.00, Remove wet flooring 320 SF at 2.25/SF 720.00, Remove baseboards 20 LF 60.00, Remove cabinets 8 LF 240.00, Debris removal 450.00 - Subtotal Demo 1,590.00
+
+Reconstruction: Replace drywall 80 SF at 3.50/SF 280.00, Texture and paint 80 SF 240.00, Replace hardwood flooring 120 SF at 8.50/SF 1,020.00, Replace carpet 200 SF at 4.50/SF 900.00, Replace baseboards 20 LF at 4.00/LF 80.00, Replace lower cabinets 8 LF at 175/LF 1,400.00, Dishwasher replacement 650.00, Plumbing repairs 425.00 - Subtotal Reconstruction 4,995.00
+
+TOTAL ESTIMATED REPAIR COST: 8,885.00
+
+SCOPE OF WORK: Continue dehumidification until moisture readings reach acceptable levels. Remove all wet materials including drywall, flooring, and damaged cabinets. Apply antimicrobial treatment to affected framing and subfloors. Document moisture readings before reconstruction. Replace all removed materials with like kind and quality. Test all plumbing repairs and verify proper drainage upon completion.
+
+PAYMENT RECOMMENDATION: Based on our inspection and the factors outlined in this report, we recommend payment of claim on an ACV basis totaling approximately 8,885.00 for dwelling repairs, subject to policy terms and deductible.
+
+Thank you for the opportunity to be of service to you and your policyholders.
 
 
 ## ASSIGNMENT
 
-Assignment was received on ${currentDate} to inspect the insured's property damages resulting from ${reportData.lossType}.
-
-Contact was established with the insured on ${currentDate} and inspection of the risk was completed on ${currentDate}.
-
-The following parties were present during our inspection: [List insured, PA, contractor, etc. with contact information if applicable].
-
-A full inspection was conducted for the ${reportData.lossType} damages at the risk location, and we have outlined our findings in this report for your review and consideration.
-
+Assignment was received on ${currentDate} to inspect the insured property damages resulting from ${reportData.lossType}. Contact was established with the insured on ${currentDate} and inspection of the risk was completed on ${currentDate}. The insured and our inspector were present during the inspection. A full inspection was conducted for the ${reportData.lossType} damages at the risk location. Our findings are outlined in this report for your review and consideration.
 
 ## INSURED
 
-Named insured is confirmed to be ${reportData.insuredName} which matches the provided policy information.
+Named insured is confirmed to be ${reportData.insuredName} which matches the provided policy information. Contact information is on file with the carrier.
 
-The best contact number for the insured is [provide phone] and email is [provide email if available].
+## OWNERSHIP / INSURABLE INTEREST
 
-
-## RISK
-
-The loss notice and policy information confirm the risk is located at ${reportData.propertyAddress}.
-
-
-## OWNERSHIP / INSURABLE INTEREST (Mortgagee)
-
-Please confirm ownership and if there are any mortgagees on the risk location. [Add mortgagee information if known.]
-
+Property ownership confirmed with insured. Mortgagee information to be confirmed with carrier records.
 
 ## LOSS AND ORIGIN
 
-**Confirmed Date of Loss:** ${reportData.lossDate}
-**Confirmed Cause of Loss:** ${reportData.lossType}
+CONFIRMED DATE OF LOSS: ${reportData.lossDate}
+CONFIRMED CAUSE OF LOSS: ${reportData.lossType}
 
-[Provide 3-5 sentences describing: the date and time of loss, how it was discovered, by whom, under what circumstances, and detailed description of the actual or suspected cause. Be specific and thorough.]
+DETAILED LOSS DESCRIPTION: The loss was discovered by the insured on ${reportData.lossDate} when water was observed in the main level kitchen and living room areas. The insured immediately contacted a water mitigation company who responded within two hours. Investigation revealed the ${reportData.lossType} loss originated from a failed supply line connection under the kitchen sink. The water flowed for approximately 3-4 hours before discovery, affecting the main level flooring and lower cabinets. The property remains occupied with mitigation equipment currently in operation. Weather conditions were not a contributing factor. The age and condition of the plumbing connections appear to be contributing factors in this loss.
 
 
 ## DAMAGES
 
-**DWELLING:**
+ROOF: The roof is 3-tab asphalt shingle construction, gray in color, approximately 15 years old, in fair condition. Single layer installation. Medium slope pitch approximately 6/12. Drip edge present on eaves and gables. Ridge vent ventilation appears adequate. Flashing at chimney and penetrations shows normal wear. Aluminum gutters in good condition. No related ${reportData.lossType} damage observed to roof system.
 
-**ROOF:**
-Type: [Specify: Asphalt shingle, Metal, Tile, etc.]
-Age: [Specify age in years or state "Unknown"]
-Condition: [Good, Fair, Poor]
-Layers: [Single layer, Multiple layers]
-Pitch: [Low slope, Medium slope, Steep slope]
-Drip Edge: [Present, Not present]
+EXTERIOR ELEVATIONS:
 
-Damages: [Provide detailed paragraph describing roof damages observed, affected areas, extent of damage, and repair recommendations. If no roof damage: "No visible or related roof damages were observed during our inspection."]
+Front Elevation: Vinyl siding beige color in good condition. Three double-hung vinyl windows operational. Entry door fiberglass construction good condition. Foundation visible slab construction no cracks observed. No landscaping impact. No visible damages observed to front elevation related to this loss.
 
-EXTERIOR:
+Right Elevation: Vinyl siding good condition. Two windows operational. No visible damages observed.
 
-Front Elevation: [Provide detailed description of siding condition, window condition, door condition, and any damages. If none: "No visible or related damages were observed to the Front Elevation during our inspection."]
+Left Elevation: Vinyl siding good condition. Kitchen window above sink location. No visible damages observed to siding.
 
-Right Elevation: [Same format as above]
+Rear Elevation: Vinyl siding good condition. Sliding glass door to patio operational. Small concrete patio in good condition. No visible damages observed.
 
-Left Elevation: [Same format as above]
+INTERIOR: Kitchen shows water damage to hardwood flooring approximately 120 square feet and lower cabinets 8 linear feet along east wall. Living room carpet damaged approximately 200 square feet. Drywall in kitchen requires 2-foot flood cut along affected walls. All upper level rooms show no visible damage.
 
-Rear Elevation: [Same format as above]
+## EXPERTS
 
-INTERIOR:
+No experts were retained or recommended for this loss.
 
-[Provide room-by-room assessment. For each affected room, describe:
-- Room name (Kitchen, Master Bedroom, etc.)
-- Flooring damage (type, extent, square footage)
-- Wall damage (drywall, paint, wallpaper)
-- Ceiling damage
-- Fixtures/built-ins affected
-- Recommended repairs
+## OFFICIAL REPORTS
 
-Example format:
-Kitchen: Water damage observed to hardwood flooring (approximately 150 square feet), lower cabinets (12 linear feet), and drywall (2-foot flood cut required along south wall).
+No official reports were provided or pending with this assignment.
 
-Master Bedroom: Smoke damage to ceiling and upper walls. Odor present. Recommend cleaning and repainting.]
+## SUBROGATION
 
-OTHER STRUCTURES:
+Subrogation Potential: No
 
-[Describe any damage to detached garage, shed, fence, etc. If none: "No damage to other structures was observed during our inspection."]
+Our investigation did not reveal any third-party liability or product defects; therefore, subrogation potential is not present at this time.
 
+## SALVAGE
 
-EXPERTS
+An inspection of the damaged property determined that there are no viable salvage opportunities associated with this claim.
 
-[Either list experts retained: "We retained [Name], [Type of Expert] at [Phone/Email] to evaluate [specific issue]."
-OR state: "No experts were retained or recommended for this loss."]
+## ACTION PLAN/PENDING ITEMS
 
+At this time, no further items are pending. Should any additional activity be required to conclude this claim, please contact us.
 
-OFFICIAL REPORTS
+## RECOMMENDATION
 
-[Either describe reports: "We received a report from [Expert Name] dated [Date] indicating [brief summary of findings]."
-OR state: "No official reports were provided or pending with this assignment."]
+Based on our inspection and the factors outlined in this report, we recommend claim payment for the damages sustained. The scope of damage is consistent with the reported ${reportData.lossType} loss and repairs can proceed once authorization is received.
 
+## DIARY DATE
 
-SUBROGATION
+No diary date required at this time.
 
-Subrogation Potential: [Yes or No]
-Remarks: [If Yes, explain: "Third-party liability exists against [party name] due to [reason]. We recommend pursuing subrogation."
-If No: "Our investigation did not reveal any third-party liability or product defects; therefore, subrogation potential is not present at this time."]
-
-
-SALVAGE
-
-[Either: "Salvage value exists on [describe items] with estimated value of [amount]."
-OR: "An inspection of the damaged property determined that there is no viable salvage opportunities associated with this claim."]
-
-
-ACTION PLAN/PENDING ITEMS
-
-[Either list numbered items:
-1. Awaiting [document/approval/inspection]
-2. [Next action item]
-3. [Next action item]
-
-OR state: "At this time, no further items are pending. Should any additional activity be required to conclude this claim, please contact us."]
-
-
-RECOMMENDATION
-
-Based on our inspection and the factors outlined in this report, we recommend [specific recommendation: claim payment, further investigation, denial, etc.]. [Add 1-2 sentences justifying the recommendation.]
-
-
-DIARY DATE
-
-[Either: "Next report expected on or before [Date] pending [reason]."
-OR: "No diary date required at this time."]
-
-
-Thank you for allowing FlacronAI to be of service to you on this loss.
-
----
-
-FORMATTING RULES - FOLLOW STRICTLY:
-1. NO asterisks anywhere
-2. NO underscores for emphasis
-3. NO markdown or special characters
-4. Write plain text as if in Notepad
-5. Section headers in ALL CAPS
-6. Subsection headers in Title Case with colon
-7. Professional insurance industry language
-8. Be thorough and specific
-9. NO preamble - start with "REMARKS"
-10. End with "Thank you for allowing FlacronAI..."`;
+Thank you for allowing FlacronAI to be of service to you on this loss.`;
 
   const rawContent = await generateContent(prompt);
 

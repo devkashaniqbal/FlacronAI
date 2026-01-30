@@ -6,6 +6,12 @@ const TIERS = {
     price: 0,
     priceId: null, // No Stripe price ID for free tier
     reportsPerMonth: 1,
+    maxUsers: 1,
+    // API Configuration
+    apiAccess: false,
+    apiCallsPerHour: 0,
+    apiCallsPerMonth: 0,
+    maxApiKeys: 0,
     features: {
       allReportTypes: true,
       pdfExport: true,
@@ -16,7 +22,9 @@ const TIERS = {
       prioritySupport: false,
       photoUpload: false,
       photoAnalysis: false,
-      maxPhotosPerReport: 0
+      maxPhotosPerReport: 0,
+      apiAccess: false,
+      webhooks: false
     },
     description: '1 report per month - Perfect for trying out the service'
   },
@@ -26,6 +34,12 @@ const TIERS = {
     price: 39.99,
     priceId: 'price_professional_monthly', // Replace with actual Stripe price ID
     reportsPerMonth: 20,
+    maxUsers: 1,
+    // API Configuration
+    apiAccess: true,
+    apiCallsPerHour: 100,
+    apiCallsPerMonth: 1000,
+    maxApiKeys: 2,
     features: {
       allReportTypes: true,
       pdfExport: true,
@@ -37,7 +51,9 @@ const TIERS = {
       emailSupport: true,
       photoUpload: true,
       photoAnalysis: true,
-      maxPhotosPerReport: 5
+      maxPhotosPerReport: 5,
+      apiAccess: true,
+      webhooks: false
     },
     description: '20 reports per month - Great for individual professionals'
   },
@@ -48,6 +64,11 @@ const TIERS = {
     priceId: 'price_agency_monthly', // Replace with actual Stripe price ID
     reportsPerMonth: 100,
     maxUsers: 5,
+    // API Configuration
+    apiAccess: true,
+    apiCallsPerHour: 500,
+    apiCallsPerMonth: 5000,
+    maxApiKeys: 5,
     features: {
       allReportTypes: true,
       pdfExport: true,
@@ -61,7 +82,9 @@ const TIERS = {
       emailSupport: true,
       photoUpload: true,
       photoAnalysis: true,
-      maxPhotosPerReport: 10
+      maxPhotosPerReport: 10,
+      apiAccess: true,
+      webhooks: true
     },
     description: '100 reports per month - Perfect for small agencies'
   },
@@ -72,6 +95,11 @@ const TIERS = {
     priceId: 'price_enterprise_monthly', // Replace with actual Stripe price ID
     reportsPerMonth: -1, // Unlimited
     maxUsers: -1, // Unlimited
+    // API Configuration
+    apiAccess: true,
+    apiCallsPerHour: 10000,
+    apiCallsPerMonth: -1, // Unlimited
+    maxApiKeys: -1, // Unlimited
     features: {
       allReportTypes: true,
       pdfExport: true,
@@ -88,7 +116,8 @@ const TIERS = {
       prioritySupport: true,
       photoUpload: true,
       photoAnalysis: true,
-      maxPhotosPerReport: -1 // Unlimited
+      maxPhotosPerReport: -1, // Unlimited
+      webhooks: true
     },
     description: 'Unlimited reports and users - Enterprise solution'
   }
@@ -169,6 +198,84 @@ function hasExceededLimit(reportsUsed, tierName) {
   return reportsUsed >= tier.reportsPerMonth;
 }
 
+// ============================================
+// API Access Helper Functions
+// ============================================
+
+/**
+ * Check if tier has API access
+ */
+function hasApiAccess(tierName) {
+  const tier = getTier(tierName);
+  return tier.apiAccess === true;
+}
+
+/**
+ * Get API calls per hour limit for tier
+ */
+function getApiCallsPerHour(tierName) {
+  const tier = getTier(tierName);
+  return tier.apiCallsPerHour || 0;
+}
+
+/**
+ * Get API calls per month limit for tier
+ */
+function getApiCallsPerMonth(tierName) {
+  const tier = getTier(tierName);
+  return tier.apiCallsPerMonth || 0;
+}
+
+/**
+ * Get max API keys allowed for tier
+ */
+function getMaxApiKeys(tierName) {
+  const tier = getTier(tierName);
+  return tier.maxApiKeys || 0;
+}
+
+/**
+ * Check if tier has unlimited API calls
+ */
+function hasUnlimitedApiCalls(tierName) {
+  const tier = getTier(tierName);
+  return tier.apiCallsPerMonth === -1;
+}
+
+/**
+ * Check if API calls exceeded hourly limit
+ */
+function hasExceededHourlyApiLimit(callsThisHour, tierName) {
+  const tier = getTier(tierName);
+  if (tier.apiCallsPerHour === -1 || tier.apiCallsPerHour === 0) {
+    return false;
+  }
+  return callsThisHour >= tier.apiCallsPerHour;
+}
+
+/**
+ * Check if API calls exceeded monthly limit
+ */
+function hasExceededMonthlyApiLimit(callsThisMonth, tierName) {
+  const tier = getTier(tierName);
+  if (tier.apiCallsPerMonth === -1) {
+    return false; // Unlimited
+  }
+  return callsThisMonth >= tier.apiCallsPerMonth;
+}
+
+/**
+ * Get rate limit info for response headers
+ */
+function getRateLimitInfo(tierName, currentUsage) {
+  const tier = getTier(tierName);
+  return {
+    limit: tier.apiCallsPerHour === -1 ? 'unlimited' : tier.apiCallsPerHour,
+    remaining: tier.apiCallsPerHour === -1 ? 'unlimited' : Math.max(0, tier.apiCallsPerHour - currentUsage),
+    resetTime: new Date(Date.now() + 3600000).toISOString() // 1 hour from now
+  };
+}
+
 module.exports = {
   TIERS,
   getTier,
@@ -178,5 +285,14 @@ module.exports = {
   getAllTiers,
   getUsagePercentage,
   isApproachingLimit,
-  hasExceededLimit
+  hasExceededLimit,
+  // API Access Functions
+  hasApiAccess,
+  getApiCallsPerHour,
+  getApiCallsPerMonth,
+  getMaxApiKeys,
+  hasUnlimitedApiCalls,
+  hasExceededHourlyApiLimit,
+  hasExceededMonthlyApiLimit,
+  getRateLimitInfo
 };

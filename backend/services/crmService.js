@@ -73,7 +73,7 @@ async function getAllClients(userId, filters = {}) {
   try {
     const db = getFirestore();
 
-    // Simplified query to avoid index requirements
+    // Fetch regular clients
     const snapshot = await db.collection('clients')
       .where('createdBy', '==', userId)
       .get();
@@ -95,13 +95,50 @@ async function getAllClients(userId, filters = {}) {
       if (include) {
         clients.push({
           id: doc.id,
+          clientId: doc.id,
+          ...data
+        });
+      }
+    });
+
+    // Also fetch enterprise clients (converted from sales leads)
+    const enterpriseSnapshot = await db.collection('enterpriseClients').get();
+
+    enterpriseSnapshot.forEach(doc => {
+      const data = doc.data();
+
+      // Apply filters in memory
+      let include = true;
+      if (filters.type && data.type && data.type !== filters.type) {
+        include = false;
+      }
+      if (filters.status && data.status !== filters.status) {
+        include = false;
+      }
+
+      if (include) {
+        clients.push({
+          id: doc.id,
+          clientId: doc.id,
+          contactName: data.contactName,
+          companyName: data.companyName,
+          email: data.email,
+          phone: data.phone,
+          type: data.tier || data.type || 'Enterprise',
+          status: data.status || 'active',
+          totalClaims: 0,
+          createdAt: data.createdAt,
           ...data
         });
       }
     });
 
     // Sort by createdAt descending
-    clients.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    clients.sort((a, b) => {
+      const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+      const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+      return dateB - dateA;
+    });
 
     return {
       success: true,

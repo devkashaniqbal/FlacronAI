@@ -1,19 +1,63 @@
+/* ============================================
+   SIDEBAR - RESPONSIVE
+   ============================================ */
 .sidebar {
   width: 280px;
-  background: #1f2937;
+  background: #000000;
   color: white;
   height: 100vh;
+  height: 100dvh;
   position: fixed;
   left: 0;
   top: 0;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  z-index: 1000;
+  transition: transform 0.3s ease;
 }
 
+/* Mobile: Hide sidebar by default */
+@media (max-width: 1023px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px;
+    box-shadow: none;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 5px 0 30px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .sidebar {
+    width: 280px;
+  }
+}
+
+/* Desktop: Always visible */
+@media (min-width: 1024px) {
+  .sidebar {
+    transform: translateX(0);
+  }
+}
+
+/* ============================================
+   SIDEBAR HEADER
+   ============================================ */
 .sidebar-header {
-  padding: 2rem 1.5rem;
+  padding: 1.5rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-logo-link {
+  text-decoration: none;
 }
 
 .sidebar-header h1 {
@@ -27,9 +71,39 @@
   color: #FF7C08;
 }
 
+/* Close button - only visible on mobile */
+.sidebar-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-close-btn:hover {
+  background: rgba(255, 124, 8, 0.3);
+  color: #FF7C08;
+}
+
+@media (min-width: 1024px) {
+  .sidebar-close-btn {
+    display: none;
+  }
+}
+
+/* ============================================
+   SIDEBAR NAVIGATION
+   ============================================ */
 .sidebar-nav {
   flex: 1;
   padding: 1rem 0;
+  overflow-y: auto;
 }
 
 .nav-item {
@@ -41,6 +115,8 @@
   text-decoration: none;
   transition: all 0.3s;
   border-left: 3px solid transparent;
+  font-weight: 500;
+  min-height: 52px;
 }
 
 .nav-item:hover {
@@ -58,15 +134,21 @@
   font-size: 1.25rem;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .nav-label {
   font-weight: 500;
+  font-size: 0.95rem;
 }
 
+/* ============================================
+   SIDEBAR FOOTER
+   ============================================ */
 .sidebar-footer {
   padding: 1.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
 }
 
 .user-info {
@@ -74,11 +156,15 @@
   align-items: center;
   gap: 1rem;
   margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
 }
 
 .user-avatar {
   width: 40px;
   height: 40px;
+  min-width: 40px;
   border-radius: 50%;
   background: #FF7C08;
   display: flex;
@@ -86,11 +172,13 @@
   justify-content: center;
   font-weight: 600;
   font-size: 1.125rem;
+  color: white;
 }
 
 .user-details {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .user-name {
@@ -100,6 +188,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: white;
 }
 
 .user-email {
@@ -111,10 +200,110 @@
   text-overflow: ellipsis;
 }
 
-@media (max-width: 768px) {
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
+/* Logout button */
+.sidebar-footer .btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  min-height: 48px;
+  font-size: 0.9rem;
+}
+
+.sidebar-footer .btn-outline {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sidebar-footer .btn-outline:hover {
+  background: rgba(255, 124, 8, 0.2);
+  border-color: #FF7C08;
+  color: #FF7C08;
+}
+
+/* ============================================
+   MOBILE TOGGLE BUTTON
+   ============================================ */
+.sidebar-mobile-toggle {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 999;
+  width: 48px;
+  height: 48px;
+  background: #000000;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 1.25rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-mobile-toggle:hover {
+  background: #FF7C08;
+  transform: scale(1.05);
+}
+
+@media (max-width: 1023px) {
+  .sidebar-mobile-toggle {
+    display: flex;
   }
+}
+
+/* ============================================
+   SIDEBAR OVERLAY
+   ============================================ */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (min-width: 1024px) {
+  .sidebar-overlay {
+    display: none !important;
+  }
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }

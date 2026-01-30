@@ -17,6 +17,8 @@ const authRouter = require('./routes/auth');
 const usersRouter = require('./routes/users');
 const paymentRouter = require('./routes/payment');
 const crmRouter = require('./routes/crm');
+const salesRouter = require('./routes/sales');
+const whiteLabelRouter = require('./routes/whitelabel');
 
 // Create Express app
 const app = express();
@@ -52,9 +54,12 @@ app.use(helmet({
         "https://*.googleapis.com",
         "https://*.firebaseio.com",
         "https://*.cloudfunctions.net"
-      ]
+      ],
+      frameAncestors: ["'self'", "http://localhost:5173", "http://localhost:3000"]
     }
-  }
+  },
+  crossOriginResourcePolicy: false,
+  crossOriginEmbedderPolicy: false
 }));
 
 // CORS configuration - Allow all origins for development (mobile app needs this)
@@ -127,6 +132,11 @@ app.get('/api', (req, res) => {
     version: '1.0.0',
     description: 'AI-powered Insurance Inspection Report Generator',
     powered_by: 'IBM WatsonX AI & OpenAI',
+    authentication: {
+      methods: ['Bearer Token', 'API Key'],
+      bearerToken: 'Authorization: Bearer <firebase_token>',
+      apiKey: 'X-API-Key: flac_live_xxxxxxxxxxxxx'
+    },
     endpoints: {
       reports: {
         generate: 'POST /api/reports/generate',
@@ -148,10 +158,26 @@ app.get('/api', (req, res) => {
         profile: 'GET /api/users/profile',
         updateProfile: 'PUT /api/users/profile',
         usage: 'GET /api/users/usage',
-        upgrade: 'POST /api/users/upgrade'
+        upgrade: 'POST /api/users/upgrade',
+        changeName: 'PUT /api/users/update-name',
+        changePassword: 'PUT /api/users/change-password',
+        apiAccess: 'GET /api/users/api-access'
+      },
+      apiKeys: {
+        create: 'POST /api/users/api-keys',
+        list: 'GET /api/users/api-keys',
+        revoke: 'DELETE /api/users/api-keys/:keyId',
+        usage: 'GET /api/users/api-keys/:keyId/usage',
+        analytics: 'GET /api/users/api-usage'
       }
     },
-    documentation: 'https://flacronai.com/docs'
+    rateLimits: {
+      starter: '0 API calls (no API access)',
+      professional: '100 calls/hour, 1,000 calls/month',
+      agency: '500 calls/hour, 5,000 calls/month',
+      enterprise: '10,000 calls/hour, unlimited/month'
+    },
+    documentation: 'https://flacronai.com/docs/api'
   });
 });
 
@@ -161,6 +187,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/payment', paymentRouter);
 app.use('/api/crm', crmRouter);
+app.use('/api/sales', salesRouter);
+app.use('/api/white-label', whiteLabelRouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -270,8 +270,9 @@ h3 { font-size: var(--font-size-lg); }
   right: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.95) 40%, rgba(255, 124, 8, 0.08) 100%);
+  background: transparent;
   pointer-events: none;
+  display: none;
 }
 
 .hero::after {
@@ -735,8 +736,133 @@ h3 { font-size: var(--font-size-lg); }
 }
 
 /* ============================================
-   RESPONSIVE DESIGN
+   RESPONSIVE DESIGN - MOBILE FIRST
    ============================================ */
+
+/* Extra small devices (phones, less than 480px) */
+@media (max-width: 479px) {
+  :root {
+    --space-lg: 2rem;
+    --space-xl: 3rem;
+  }
+
+  .container {
+    padding: 0 1rem;
+  }
+
+  h1 { font-size: clamp(1.75rem, 6vw, 3rem); }
+  h2 { font-size: clamp(1.5rem, 5vw, 2.5rem); }
+  h3 { font-size: clamp(1.25rem, 4vw, 1.75rem); }
+
+  .btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+  }
+
+  .hero {
+    padding-top: 70px;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .hero-description {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .hero-badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 1rem;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+  }
+
+  .section-title {
+    font-size: 1.75rem;
+  }
+
+  .section-subtitle {
+    font-size: 1rem;
+  }
+
+  .features {
+    padding: 3rem 0;
+  }
+
+  .feature-card {
+    padding: 1.5rem;
+  }
+
+  .feature-icon {
+    width: 52px;
+    height: 52px;
+    margin-bottom: 1rem;
+  }
+
+  .feature-card h3 {
+    font-size: 1rem;
+  }
+
+  .feature-card p {
+    font-size: 0.9rem;
+  }
+
+  .pricing {
+    padding: 3rem 0;
+  }
+
+  .pricing-card {
+    padding: 1.5rem;
+  }
+
+  .amount {
+    font-size: 2.5rem;
+  }
+
+  .checkout-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .checkout-container {
+    padding: 1rem;
+  }
+}
+
+/* Small devices (phones, 480px - 767px) */
+@media (min-width: 480px) and (max-width: 767px) {
+  :root {
+    --space-lg: 2.5rem;
+    --space-xl: 4rem;
+  }
+
+  .hero-title {
+    font-size: 2.25rem;
+  }
+
+  .hero-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .stat-number {
+    font-size: 1.75rem;
+  }
+}
+
+/* Medium devices (tablets, 768px and up) */
 @media (max-width: 768px) {
   :root {
     --space-lg: 3rem;
@@ -774,7 +900,7 @@ h3 { font-size: var(--font-size-lg); }
   }
 
   .hero-stats {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: var(--space-sm);
   }
 
@@ -792,21 +918,23 @@ h3 { font-size: var(--font-size-lg); }
     min-height: 60px;
   }
 
-  .nav {
-    display: flex !important;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--space-sm);
-    width: 100%;
+  .footer-content {
+    gap: var(--space-md);
+  }
+}
+
+/* Tablet landscape and small desktops */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .nav-link {
-    font-size: 0.875rem;
+  .pricing-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .nav .btn-primary {
-    padding: 0.75rem 1.5rem;
-    font-size: 0.875rem;
+  .hero-stats {
+    max-width: 400px;
   }
 }
 
@@ -815,7 +943,7 @@ h3 { font-size: var(--font-size-lg); }
    ============================================ */
 .checkout-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+  background: var(--white);
   padding: 2rem;
 }
 
@@ -836,7 +964,7 @@ h3 { font-size: var(--font-size-lg); }
 .checkout-header {
   text-align: center;
   margin-bottom: 3rem;
-  color: var(--white);
+  color: var(--black);
 }
 
 .checkout-header h1 {
@@ -903,8 +1031,8 @@ h3 { font-size: var(--font-size-lg); }
 }
 
 .pricing-card.featured {
-  background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
-  color: var(--white);
+  background: var(--white);
+  color: var(--black);
   border: 2px solid var(--orange);
   transform: scale(1.05);
 }

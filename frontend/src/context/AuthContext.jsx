@@ -22,7 +22,29 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Fetch user profile from backend (includes tier info)
+  const fetchUserProfile = async (userId, userToken) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/profile?userId=${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${userToken}`
+        }
+      });
+      const data = await response.json();
+      if (data.success && data.user) {
+        setUserProfile({
+          ...data.user,
+          tier: data.user.tier || 'starter',
+          displayName: data.user.displayName || data.user.email?.split('@')[0]
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -41,9 +63,13 @@ export const AuthProvider = ({ children }) => {
         }));
 
         setUser(firebaseUser);
+
+        // Fetch user profile with tier info
+        await fetchUserProfile(firebaseUser.uid, userToken);
       } else {
         setUser(null);
         setToken(null);
+        setUserProfile(null);
         localStorage.removeItem('flacronai_token');
         localStorage.removeItem('flacronai_user');
       }
@@ -138,13 +164,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Function to refresh user profile
+  const refreshUserProfile = async () => {
+    if (user && token) {
+      await fetchUserProfile(user.uid, token);
+    }
+  };
+
   const value = {
     user,
     token,
+    userProfile,
     loading,
     register,
     login,
     logout,
+    refreshUserProfile,
     isAuthenticated: !!user,
   };
 

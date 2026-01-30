@@ -14,6 +14,7 @@ const CRM = () => {
   const [clients, setClients] = useState([]);
   const [claims, setClaims] = useState([]);
   const [subscriptions, setSubscriptions] = useState([]);
+  const [salesLeads, setSalesLeads] = useState([]);
   const [analytics, setAnalytics] = useState({
     overview: { totalClients: 0, activeClaims: 0, completedClaims: 0 },
     revenue: { total: 0 },
@@ -26,6 +27,9 @@ const CRM = () => {
   const [priorityFilter, setPriorityFilter] = useState('');
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [claimModalOpen, setClaimModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [leadDetailModalOpen, setLeadDetailModalOpen] = useState(false);
 
   const chartTypeRef = useRef(null);
   const chartStatusRef = useRef(null);
@@ -40,6 +44,8 @@ const CRM = () => {
       loadClaims();
     } else if (currentView === 'subscriptions') {
       loadSubscriptions();
+    } else if (currentView === 'salesLeads') {
+      loadSalesLeads();
     }
   }, [currentView, statusFilter, priorityFilter]);
 
@@ -111,6 +117,76 @@ const CRM = () => {
     } catch (error) {
       console.error('Error loading subscriptions:', error);
       showNotification('Failed to load subscriptions', 'error');
+    }
+  };
+
+  const loadSalesLeads = async () => {
+    try {
+      let url = `${API_BASE_URL}/sales/leads?`;
+      if (statusFilter) url += `status=${statusFilter}&`;
+      if (priorityFilter) url += `priority=${priorityFilter}&`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+      if (data.success) {
+        setSalesLeads(data.leads);
+      }
+    } catch (error) {
+      console.error('Error loading sales leads:', error);
+      showNotification('Failed to load sales leads', 'error');
+    }
+  };
+
+  const updateSalesLead = async (leadId, updates) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/sales/leads/${leadId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updates)
+      });
+      const data = await response.json();
+      if (data.success) {
+        showNotification('Sales lead updated successfully', 'success');
+        loadSalesLeads();
+      }
+    } catch (error) {
+      console.error('Error updating sales lead:', error);
+      showNotification('Failed to update sales lead', 'error');
+    }
+  };
+
+  const convertLeadToCustomer = async (lead) => {
+    if (!confirm(`Convert ${lead.companyName} to Enterprise customer?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/sales/leads/${lead.id}/convert-to-customer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          companyName: lead.companyName,
+          fullName: lead.fullName,
+          workEmail: lead.workEmail,
+          phone: lead.phone
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        showNotification(`${lead.companyName} converted to Enterprise customer!`, 'success');
+        loadSalesLeads();
+        loadClients();
+      } else {
+        showNotification(data.message || 'Failed to convert lead', 'error');
+      }
+    } catch (error) {
+      console.error('Error converting lead:', error);
+      showNotification('Failed to convert lead to customer', 'error');
     }
   };
 
@@ -199,6 +275,7 @@ const CRM = () => {
 
   const switchView = (view) => {
     setCurrentView(view);
+    setMobileMenuOpen(false); // Close mobile menu when switching views
   };
 
   const getPageTitle = () => {
@@ -301,8 +378,23 @@ const CRM = () => {
 
   return (
     <div className="crm-page">
+      {/* Mobile Menu Toggle */}
+      <button
+        className="mobile-menu-toggle"
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        aria-label="Toggle menu"
+      >
+        <i className={`fas ${mobileMenuOpen ? 'fa-times' : 'fa-bars'}`}></i>
+      </button>
+
+      {/* Sidebar Overlay for Mobile */}
+      <div
+        className={`sidebar-overlay ${mobileMenuOpen ? 'active' : ''}`}
+        onClick={() => setMobileMenuOpen(false)}
+      ></div>
+
       {/* Sidebar Navigation */}
-      <aside className="crm-sidebar">
+      <aside className={`crm-sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
           <div className="logo">
             <i className="fas fa-fire"></i>
@@ -336,22 +428,6 @@ const CRM = () => {
             <span>Claims</span>
           </a>
           <a
-            href="#calendar"
-            className={`nav-item ${currentView === 'calendar' ? 'active' : ''}`}
-            onClick={(e) => { e.preventDefault(); switchView('calendar'); }}
-          >
-            <i className="fas fa-calendar-alt"></i>
-            <span>Calendar</span>
-          </a>
-          <a
-            href="#reports"
-            className={`nav-item ${currentView === 'reports' ? 'active' : ''}`}
-            onClick={(e) => { e.preventDefault(); switchView('reports'); }}
-          >
-            <i className="fas fa-file-alt"></i>
-            <span>Reports</span>
-          </a>
-          <a
             href="#analytics"
             className={`nav-item ${currentView === 'analytics' ? 'active' : ''}`}
             onClick={(e) => { e.preventDefault(); switchView('analytics'); }}
@@ -366,6 +442,14 @@ const CRM = () => {
           >
             <i className="fas fa-credit-card"></i>
             <span>Subscriptions</span>
+          </a>
+          <a
+            href="#salesLeads"
+            className={`nav-item ${currentView === 'salesLeads' ? 'active' : ''}`}
+            onClick={(e) => { e.preventDefault(); switchView('salesLeads'); }}
+          >
+            <i className="fas fa-handshake"></i>
+            <span>Sales Leads</span>
           </a>
         </nav>
 
@@ -405,6 +489,12 @@ const CRM = () => {
           {/* Dashboard View */}
           {currentView === 'dashboard' && (
             <div className="view-container active">
+              {/* Dashboard Header */}
+              <div className="dashboard-header">
+                <h1>Dashboard</h1>
+                <p>Overview of your CRM activities</p>
+              </div>
+
               {/* Stats Cards */}
               <div className="stats-grid">
                 <div className="stat-card">
@@ -523,7 +613,7 @@ const CRM = () => {
               </div>
 
               <div className="table-container">
-                <table className="data-table">
+                <table className="crm-table">
                   <thead>
                     <tr>
                       <th>Company Name</th>
@@ -572,7 +662,12 @@ const CRM = () => {
           {currentView === 'claims' && (
             <div className="view-container active">
               <div className="view-header">
-                <div className="filter-group">
+                <div>
+                  <h1>Claims</h1>
+                  <p>Track and manage insurance claims</p>
+                </div>
+                <div className="view-actions">
+                  <div className="filter-group">
                   <select
                     className="filter-select"
                     value={statusFilter}
@@ -597,14 +692,15 @@ const CRM = () => {
                     <option value="high">High</option>
                     <option value="urgent">Urgent</option>
                   </select>
+                  </div>
+                  <button className="btn-primary" onClick={() => setClaimModalOpen(true)}>
+                    <i className="fas fa-plus"></i> New Claim
+                  </button>
                 </div>
-                <button className="btn-primary" onClick={() => setClaimModalOpen(true)}>
-                  <i className="fas fa-plus"></i> New Claim
-                </button>
               </div>
 
               <div className="table-container">
-                <table className="data-table">
+                <table className="crm-table">
                   <thead>
                     <tr>
                       <th>Claim #</th>
@@ -738,7 +834,7 @@ const CRM = () => {
                   </div>
                 ) : (
                   <div className="table-responsive">
-                    <table className="data-table">
+                    <table className="crm-table">
                       <thead>
                         <tr>
                           <th>User</th>
@@ -799,141 +895,224 @@ const CRM = () => {
               </div>
             </div>
           )}
+
+          {/* Sales Leads View */}
+          {currentView === 'salesLeads' && (
+            <div className="view-container active">
+              <div className="view-header">
+                <h1>Sales Leads</h1>
+                <div className="view-actions">
+                  <div className="filter-group">
+                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                      <option value="">All Status</option>
+                      <option value="new">New</option>
+                      <option value="contacted">Contacted</option>
+                      <option value="qualified">Qualified</option>
+                      <option value="converted">Converted</option>
+                      <option value="lost">Lost</option>
+                    </select>
+                    <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
+                      <option value="">All Priority</option>
+                      <option value="high">High</option>
+                      <option value="medium">Medium</option>
+                      <option value="low">Low</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Cards */}
+              <div className="stats-grid" style={{marginBottom: '2rem'}}>
+                <div className="stat-card">
+                  <div className="stat-icon blue">
+                    <i className="fas fa-handshake"></i>
+                  </div>
+                  <div className="stat-info">
+                    <h3>{salesLeads.length}</h3>
+                    <p>Total Leads</p>
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-icon green">
+                    <i className="fas fa-star"></i>
+                  </div>
+                  <div className="stat-info">
+                    <h3>{salesLeads.filter(l => l.status === 'new').length}</h3>
+                    <p>New Leads</p>
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-icon orange">
+                    <i className="fas fa-fire"></i>
+                  </div>
+                  <div className="stat-info">
+                    <h3>{salesLeads.filter(l => l.priority === 'high').length}</h3>
+                    <p>High Priority</p>
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-icon purple">
+                    <i className="fas fa-check-circle"></i>
+                  </div>
+                  <div className="stat-info">
+                    <h3>{salesLeads.filter(l => l.status === 'converted').length}</h3>
+                    <p>Converted</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sales Leads Table */}
+              <div className="content-card">
+                <div className="card-header">
+                  <h2>All Sales Leads</h2>
+                  <div className="header-actions">
+                    <span className="text-muted">{salesLeads.length} total leads</span>
+                  </div>
+                </div>
+                {salesLeads.length === 0 ? (
+                  <div style={{padding: '2rem', textAlign: 'center'}}>
+                    <p className="text-muted">No sales leads found.</p>
+                  </div>
+                ) : (
+                  <div className="table-container">
+                    <table className="crm-table">
+                      <thead>
+                        <tr>
+                          <th>Company</th>
+                          <th>Contact</th>
+                          <th>Email</th>
+                          <th>Phone</th>
+                          <th>Type</th>
+                          <th>Monthly Usage</th>
+                          <th>Priority</th>
+                          <th>Status</th>
+                          <th>Created</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {salesLeads.map((lead) => (
+                          <tr key={lead.id}>
+                            <td><strong>{lead.companyName}</strong></td>
+                            <td>{lead.fullName}</td>
+                            <td><a href={`mailto:${lead.workEmail}`}>{lead.workEmail}</a></td>
+                            <td>{lead.phone}</td>
+                            <td><span className="badge badge-blue">{lead.companyType}</span></td>
+                            <td>{lead.monthlyUsage}</td>
+                            <td>
+                              <span className={`badge priority-${lead.priority}`}>{lead.priority}</span>
+                            </td>
+                            <td>
+                              <select
+                                value={lead.status}
+                                onChange={(e) => updateSalesLead(lead.id, { status: e.target.value })}
+                                className={`status-select status-${lead.status}`}
+                              >
+                                <option value="new">New</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="qualified">Qualified</option>
+                                <option value="converted">Converted</option>
+                                <option value="lost">Lost</option>
+                              </select>
+                            </td>
+                            <td>{lead.createdAt ? new Date(lead.createdAt).toLocaleDateString() : 'N/A'}</td>
+                            <td>
+                              <div style={{display: 'flex', gap: '0.5rem'}}>
+                                <button
+                                  className="btn-icon"
+                                  title="View Request Details"
+                                  onClick={() => {
+                                    setSelectedLead(lead);
+                                    setLeadDetailModalOpen(true);
+                                  }}
+                                >
+                                  <i className="fas fa-eye"></i>
+                                </button>
+                                {lead.status !== 'converted' && (
+                                  <button
+                                    className="btn-primary"
+                                    style={{fontSize: '0.75rem', padding: '0.5rem 0.75rem'}}
+                                    onClick={() => convertLeadToCustomer(lead)}
+                                  >
+                                    Make Customer
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
-      {/* Add Client Modal */}
-      {clientModalOpen && (
-        <div className="modal active" onClick={(e) => { if (e.target.classList.contains('modal')) setClientModalOpen(false); }}>
-          <div className="modal-content">
+      {/* Lead Detail Modal */}
+      {leadDetailModalOpen && selectedLead && (
+        <div className="modal-overlay" onClick={() => setLeadDetailModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{maxWidth: '600px'}}>
             <div className="modal-header">
-              <h2>Add New Client</h2>
-              <button className="btn-close" onClick={() => setClientModalOpen(false)}>
+              <h2>Sales Lead Request Details</h2>
+              <button className="close-button" onClick={() => setLeadDetailModalOpen(false)}>
                 <i className="fas fa-times"></i>
               </button>
             </div>
-            <form className="modal-body" onSubmit={handleClientSubmit}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Company Name *</label>
-                  <input type="text" name="companyName" required />
+            <div style={{padding: '2rem'}}>
+              <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem'}}>
+                <div>
+                  <p style={{fontSize: '0.875rem', color: '#6B7280', marginBottom: '0.25rem'}}>Company Name</p>
+                  <p style={{fontWeight: '600', fontSize: '1rem'}}>{selectedLead.companyName}</p>
                 </div>
-                <div className="form-group">
-                  <label>Contact Person *</label>
-                  <input type="text" name="contactName" required />
+                <div>
+                  <p style={{fontSize: '0.875rem', color: '#6B7280', marginBottom: '0.25rem'}}>Contact Person</p>
+                  <p style={{fontWeight: '600', fontSize: '1rem'}}>{selectedLead.fullName}</p>
+                </div>
+                <div>
+                  <p style={{fontSize: '0.875rem', color: '#6B7280', marginBottom: '0.25rem'}}>Work Email</p>
+                  <p style={{fontWeight: '600', fontSize: '1rem'}}>{selectedLead.workEmail}</p>
+                </div>
+                <div>
+                  <p style={{fontSize: '0.875rem', color: '#6B7280', marginBottom: '0.25rem'}}>Phone</p>
+                  <p style={{fontWeight: '600', fontSize: '1rem'}}>{selectedLead.phone}</p>
+                </div>
+                <div>
+                  <p style={{fontSize: '0.875rem', color: '#6B7280', marginBottom: '0.25rem'}}>Company Type</p>
+                  <p style={{fontWeight: '600', fontSize: '1rem'}}>{selectedLead.companyType}</p>
+                </div>
+                <div>
+                  <p style={{fontSize: '0.875rem', color: '#6B7280', marginBottom: '0.25rem'}}>Monthly Usage</p>
+                  <p style={{fontWeight: '600', fontSize: '1rem'}}>{selectedLead.monthlyUsage}</p>
+                </div>
+                <div style={{gridColumn: '1 / -1'}}>
+                  <p style={{fontSize: '0.875rem', color: '#6B7280', marginBottom: '0.25rem'}}>Message</p>
+                  <p style={{fontWeight: '500', fontSize: '1rem', backgroundColor: '#F3F4F6', padding: '1rem', borderRadius: '8px'}}>
+                    {selectedLead.message || 'No message provided'}
+                  </p>
                 </div>
               </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Email *</label>
-                  <input type="email" name="email" required />
-                </div>
-                <div className="form-group">
-                  <label>Phone *</label>
-                  <input type="tel" name="phone" required />
-                </div>
+              <div style={{marginTop: '2rem', display: 'flex', gap: '1rem'}}>
+                <button
+                  className="btn-primary"
+                  style={{flex: 1}}
+                  onClick={() => {
+                    convertLeadToCustomer(selectedLead);
+                    setLeadDetailModalOpen(false);
+                  }}
+                >
+                  Make Customer
+                </button>
+                <button
+                  style={{flex: 1, padding: '0.875rem', border: '2px solid #E5E7EB', borderRadius: '8px', backgroundColor: 'white', fontWeight: '600', cursor: 'pointer'}}
+                  onClick={() => setLeadDetailModalOpen(false)}
+                >
+                  Close
+                </button>
               </div>
-              <div className="form-group">
-                <label>Client Type *</label>
-                <select name="type" required>
-                  <option value="insurance_company">Insurance Company</option>
-                  <option value="adjuster">Independent Adjuster</option>
-                  <option value="property_owner">Property Owner</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Notes</label>
-                <textarea name="notes" rows="3"></textarea>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setClientModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn-primary">Add Client</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Add Claim Modal */}
-      {claimModalOpen && (
-        <div className="modal active" onClick={(e) => { if (e.target.classList.contains('modal')) setClaimModalOpen(false); }}>
-          <div className="modal-content large">
-            <div className="modal-header">
-              <h2>Create New Claim</h2>
-              <button className="btn-close" onClick={() => setClaimModalOpen(false)}>
-                <i className="fas fa-times"></i>
-              </button>
             </div>
-            <form className="modal-body" onSubmit={handleClaimSubmit}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Claim Number *</label>
-                  <input type="text" name="claimNumber" required />
-                </div>
-                <div className="form-group">
-                  <label>Client *</label>
-                  <select name="clientId" id="claim-client-select" required>
-                    <option value="">Select Client</option>
-                    {clients.map((c) => (
-                      <option key={c.clientId} value={c.clientId} data-name={c.companyName}>
-                        {c.companyName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Insured Name *</label>
-                  <input type="text" name="insuredName" required />
-                </div>
-                <div className="form-group">
-                  <label>Property Address *</label>
-                  <input type="text" name="propertyAddress" required />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Loss Date *</label>
-                  <input type="date" name="lossDate" required />
-                </div>
-                <div className="form-group">
-                  <label>Loss Type *</label>
-                  <select name="lossType" required>
-                    <option value="">Select Type</option>
-                    <option value="Fire">Fire</option>
-                    <option value="Water Damage">Water Damage</option>
-                    <option value="Wind Damage">Wind Damage</option>
-                    <option value="Hail Damage">Hail Damage</option>
-                    <option value="Mold">Mold</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Priority</label>
-                  <select name="priority">
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Inspection Date</label>
-                  <input type="date" name="inspectionDate" />
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Notes</label>
-                <textarea name="notes" rows="3"></textarea>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn-secondary" onClick={() => setClaimModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn-primary">Create Claim</button>
-              </div>
-            </form>
           </div>
         </div>
       )}

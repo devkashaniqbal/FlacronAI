@@ -218,75 +218,64 @@ Provide a brief quality assessment and list of improvements needed.`;
  * Generate full insurance report using OpenAI (fallback for WatsonX)
  */
 async function generateReportWithOpenAI(reportData) {
-  const prompt = `Generate a comprehensive insurance inspection report based on the following information:
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
 
-CLAIM INFORMATION:
-- Claim Number: ${reportData.claimNumber}
-- Insured Name: ${reportData.insuredName}
-- Loss Date: ${reportData.lossDate || 'Not specified'}
-- Loss Type: ${reportData.lossType}
-- Property Address: ${reportData.propertyAddress || 'Not specified'}
-- Report Type: ${reportData.reportType || 'Inspection Report'}
+  const prompt = `You are a professional insurance claims adjuster writing a property inspection report for CRU GROUP.
 
-PROPERTY DETAILS:
-${reportData.propertyDetails || 'Not provided'}
+CRITICAL INSTRUCTIONS:
+1. Use ONLY these exact section headers with "## " prefix
+2. Each section header must be on its own line
+3. Write in plain text - NO asterisks, NO underscores, NO markdown formatting in content
+4. Adapt the example content to match the specific claim data provided
+5. Keep the same professional tone and detail level
 
-LOSS DESCRIPTION:
-${reportData.lossDescription || 'Not specified'}
+CLAIM DATA:
+Claim Number: ${reportData.claimNumber}
+Insured Name: ${reportData.insuredName}
+Property Address: ${reportData.propertyAddress || 'Not provided'}
+Date of Loss: ${reportData.lossDate || 'Not provided'}
+Loss Type: ${reportData.lossType}
+Inspection Date: ${currentDate}
+Property Details: ${reportData.propertyDetails || 'Not provided'}
+Damages: ${reportData.damages || 'Not provided'}
 
-DAMAGES OBSERVED:
-${reportData.damages || 'Not provided'}
+GENERATE THE REPORT USING THESE EXACT SECTION HEADERS IN ORDER:
 
-RECOMMENDATIONS:
-${reportData.recommendations || 'Not provided'}
+## REMARKS
+## RISK
+## ITV (Insurance to Value)
+## OCCURRENCE
+## COVERAGE
+## DWELLING DAMAGE
+## OTHER STRUCTURES DAMAGE
+## CONTENTS DAMAGE
+## ALE / FMV CLAIM
+## SUBROGATION / SALVAGE
+## WORK TO BE COMPLETED / RECOMMENDATION
+## ASSIGNMENT
+## INSURED
+## OWNERSHIP / INSURABLE INTEREST
+## LOSS AND ORIGIN
+## DAMAGES
+## EXPERTS
+## OFFICIAL REPORTS
+## SUBROGATION
+## SALVAGE
+## ACTION PLAN/PENDING ITEMS
+## RECOMMENDATION
+## DIARY DATE
 
-FORMATTING REQUIREMENTS:
-- Use markdown formatting (## for section headers, **text** for bold, bullets with - or *)
-- Start each main section with ## followed by the section name
-- Use **bold** for important terms and subsection headings
-- Use bullet points for lists
-- Write in complete, professional paragraphs
-
-Generate a professional insurance inspection report with the following sections:
-
-## EXECUTIVE SUMMARY
-Write a detailed executive summary (2-3 paragraphs) that provides an overview of this claim.
-
-## CLAIM INFORMATION
-Present the claim details in a professional format.
-
-## PROPERTY DETAILS
-Write detailed paragraphs describing the property and its condition.
-
-## LOSS DESCRIPTION
-Write 2-3 detailed paragraphs explaining how the loss occurred.
-
-## SCOPE OF DAMAGE
-Write detailed paragraphs describing all areas affected by the loss.
-
-## DAMAGE ASSESSMENT
-Provide a thorough analysis (3-4 paragraphs) of the damage severity.
-
-## COST ESTIMATE
-If applicable, provide detailed cost breakdowns with explanations.
-
-## RECOMMENDATIONS
-Write specific, actionable recommendations (2-3 paragraphs) for remediation.
-
-## CONCLUSION
-Write a concluding paragraph summarizing the report findings.
-
-IMPORTANT:
-- Write ACTUAL REPORT CONTENT with full paragraphs, not a template
-- Use markdown formatting (##, **, bullets)
-- Be specific, factual, and professional
-- Use the claim information provided to create realistic, detailed content`;
+For each section, provide detailed, realistic content based on the claim data. Write in plain text without markdown formatting. Be specific and professional.`;
 
   console.log('🔄 Generating report with OpenAI as fallback...');
 
   const content = await generateContent(prompt, {
-    systemPrompt: 'You are an expert insurance adjuster generating detailed inspection reports. Use professional language, markdown formatting, and standard CRU (Combined Reporting Unit) format. Always use ## for section headers and **bold** for subsection headers.',
-    temperature: 0.7,
+    systemPrompt: 'You are an expert insurance adjuster generating CRU GROUP format reports. Use ## for section headers ONLY. Write content in plain text without asterisks, underscores, or other markdown formatting. Be detailed, specific, and professional.',
+    temperature: 0.5,
     maxTokens: 4096
   });
 

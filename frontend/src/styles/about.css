@@ -1,0 +1,359 @@
+/* About Page Styles - Openkoda Design */
+
+.about-page {
+  background: #FFFFFF;
+  min-height: 100vh;
+}
+
+/* Hero Section */
+.about-hero {
+  background: linear-gradient(to bottom, rgba(255, 124, 8, 0.15) 0%, rgba(255, 124, 8, 0.05) 50%, transparent 100%);
+  padding: 120px 0 80px;
+  text-align: center;
+}
+
+.about-hero-content h1 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.about-hero-content p {
+  font-size: 1.25rem;
+  color: rgba(0, 0, 0, 0.7);
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* Story Section */
+.about-story {
+  padding: 6rem 0;
+}
+
+.story-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5rem;
+  align-items: center;
+}
+
+.story-content h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.story-content p {
+  font-size: 1.125rem;
+  color: rgba(0, 0, 0, 0.7);
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+}
+
+.story-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 124, 8, 0.1);
+}
+
+/* Values Section */
+.about-values {
+  padding: 6rem 0;
+  background: rgba(255, 124, 8, 0.03);
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.section-header h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.section-header p {
+  font-size: 1.125rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.value-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(255, 124, 8, 0.1);
+  border-radius: 12px;
+  padding: 2.5rem 2rem;
+  transition: all 0.3s ease;
+}
+
+.value-card:hover {
+  border-color: rgba(255, 124, 8, 0.3);
+  transform: translateY(-4px);
+}
+
+.value-icon {
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 124, 8, 0.1);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.value-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke: #FF7C08;
+}
+
+.value-card h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 1rem;
+}
+
+.value-card p {
+  font-size: 1rem;
+  color: rgba(0, 0, 0, 0.7);
+  line-height: 1.6;
+}
+
+/* Team Section */
+.about-team {
+  padding: 6rem 0;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+}
+
+.team-card {
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.team-card:hover {
+  transform: translateY(-8px);
+}
+
+.team-card img {
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  border: 2px solid rgba(255, 124, 8, 0.1);
+}
+
+.team-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 0.5rem;
+}
+
+.team-role {
+  font-size: 0.95rem;
+  color: #FF7C08;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.team-bio {
+  font-size: 0.95rem;
+  color: rgba(0, 0, 0, 0.6);
+  line-height: 1.6;
+}
+
+/* CTA Section */
+.about-cta {
+  padding: 6rem 0;
+  background: #FF7C08;
+}
+
+.cta-content {
+  text-align: center;
+}
+
+.cta-content h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 1rem;
+}
+
+.cta-content p {
+  font-size: 1.125rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 2rem;
+}
+
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 16px 40px;
+  background: #FFFFFF;
+  color: #FF7C08;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.cta-button:hover {
+  background: #000000;
+  color: #FFFFFF;
+  transform: translateY(-2px);
+}
+
+.cta-button svg {
+  transition: transform 0.3s ease;
+}
+
+.cta-button:hover svg {
+  transform: translateX(4px);
+}
+
+/* Responsive Design - Mobile First */
+@media (max-width: 480px) {
+  .about-hero {
+    padding: 80px 0 40px;
+  }
+
+  .about-hero-content h1 {
+    font-size: 1.75rem;
+  }
+
+  .about-hero-content p {
+    font-size: 1rem;
+  }
+
+  .about-story,
+  .about-values,
+  .about-team,
+  .about-cta {
+    padding: 3rem 0;
+  }
+
+  .story-content h2,
+  .section-header h2,
+  .cta-content h2 {
+    font-size: 1.5rem;
+  }
+
+  .story-content p,
+  .section-header p,
+  .cta-content p {
+    font-size: 1rem;
+  }
+
+  .value-card {
+    padding: 1.5rem;
+  }
+
+  .value-card h3 {
+    font-size: 1.25rem;
+  }
+
+  .value-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .team-card img {
+    height: 220px;
+  }
+
+  .team-card h3 {
+    font-size: 1.125rem;
+  }
+
+  .team-role {
+    font-size: 0.85rem;
+  }
+
+  .team-bio {
+    font-size: 0.875rem;
+  }
+
+  .cta-button {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 32px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .story-grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .team-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .about-hero {
+    padding: 90px 0 50px;
+  }
+
+  .about-hero-content h1 {
+    font-size: 2rem;
+  }
+
+  .about-story,
+  .about-values,
+  .about-team,
+  .about-cta {
+    padding: 4rem 0;
+  }
+
+  .values-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .team-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .section-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .section-header h2,
+  .story-content h2,
+  .cta-content h2 {
+    font-size: 1.75rem;
+  }
+}

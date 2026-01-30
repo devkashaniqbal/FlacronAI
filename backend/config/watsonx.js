@@ -72,81 +72,62 @@ async function generateReport(reportData) {
   try {
     const client = getWatsonXClient();
 
-    // Construct comprehensive prompt for CRU GROUP report template
-    const prompt = `You are a professional insurance adjuster writing the ACTUAL CONTENT for a detailed insurance claim report. Write the full report with complete paragraphs and analysis, not just an outline.
+    const currentDate = new Date().toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
 
-CLAIM INFORMATION:
-- Claim Number: ${reportData.claimNumber}
-- Insured Name: ${reportData.insuredName}
-- Property Address: ${reportData.propertyAddress || 'Not provided'}
-- Loss Date: ${reportData.lossDate || 'Not provided'}
-- Loss Type: ${reportData.lossType}
-- Report Type: ${reportData.reportType}
+    // Construct CRU GROUP template-compatible prompt - CONCISE VERSION
+    const prompt = `Write an insurance inspection report for CRU GROUP format.
 
-PROPERTY DETAILS:
-${reportData.propertyDetails || 'Not provided'}
+CLAIM DATA:
+Claim: ${reportData.claimNumber}
+Insured: ${reportData.insuredName}
+Address: ${reportData.propertyAddress || 'Not provided'}
+Loss Date: ${reportData.lossDate || 'Not provided'}
+Loss Type: ${reportData.lossType}
+Details: ${reportData.propertyDetails || 'Not provided'}
+Damages: ${reportData.damages || 'Not provided'}
 
-LOSS DESCRIPTION:
-${reportData.lossDescription || 'Not provided'}
+Write 2-3 detailed sentences for EACH section. Use ## for headers. No markdown in content.
 
-DAMAGES OBSERVED:
-${reportData.damages || 'Not provided'}
+## REMARKS
+## RISK
+## ITV (Insurance to Value)
+## OCCURRENCE
+## COVERAGE
+## DWELLING DAMAGE
+## OTHER STRUCTURES DAMAGE
+## CONTENTS DAMAGE
+## ALE / FMV CLAIM
+## SUBROGATION / SALVAGE
+## WORK TO BE COMPLETED / RECOMMENDATION
+## ASSIGNMENT
+## INSURED
+## OWNERSHIP / INSURABLE INTEREST
+## LOSS AND ORIGIN
+## DAMAGES
+## EXPERTS
+## OFFICIAL REPORTS
+## SUBROGATION
+## SALVAGE
+## ACTION PLAN/PENDING ITEMS
+## RECOMMENDATION
+## DIARY DATE
 
-RECOMMENDATIONS:
-${reportData.recommendations || 'Not provided'}
-
-Write a complete, comprehensive insurance claim report with the following sections. For EACH section, write detailed content with full sentences and paragraphs based on the information provided above.
-
-FORMATTING REQUIREMENTS:
-- Use markdown formatting (## for section headers, **text** for bold, bullets with - or *)
-- Start each main section with ## followed by the section name
-- Use **bold** for important terms and subsection headings
-- Use bullet points for lists
-- Write in complete, professional paragraphs
-
-## EXECUTIVE SUMMARY
-Write a detailed executive summary (2-3 paragraphs) that provides an overview of this claim, including the loss type, key findings, and overall assessment.
-
-## CLAIM INFORMATION
-Present the claim details in a professional format.
-
-## PROPERTY DETAILS
-Write detailed paragraphs describing the property, its condition before the loss, and relevant characteristics.
-
-## LOSS DESCRIPTION
-Write 2-3 detailed paragraphs explaining how the loss occurred, when it happened, and the immediate impact.
-
-## SCOPE OF DAMAGE
-Write detailed paragraphs describing all areas affected by the loss, the extent of damage to each area, and what was observed during inspection.
-
-## DAMAGE ASSESSMENT
-Provide a thorough analysis (3-4 paragraphs) of the damage severity, affected building systems, materials impacted, and professional assessment of the situation.
-
-## COST ESTIMATE
-If applicable, provide detailed cost breakdowns with explanations.
-
-## RECOMMENDATIONS
-Write specific, actionable recommendations (2-3 paragraphs) for remediation, repairs, and next steps.
-
-## CONCLUSION
-Write a concluding paragraph summarizing the report findings and recommendations.
-
-IMPORTANT:
-- Write the ACTUAL REPORT CONTENT with full paragraphs, not a template or outline
-- Use markdown formatting (##, **, bullets)
-- Be specific, factual, and professional
-- Use the claim information provided to create realistic, detailed content for each section`;
+Generate full report now:`;
 
     // Generate text using WatsonX AI
     const textGenParams = {
       input: prompt,
       modelId: process.env.WATSONX_MODEL || 'ibm/granite-13b-chat-v2',
       parameters: {
-        max_new_tokens: 2048,
-        temperature: 0.3,
-        top_p: 0.9,
+        max_new_tokens: 4096,  // Increased from 2048 to allow longer reports
+        temperature: 0.5,       // Increased slightly for more varied output
+        top_p: 0.95,
         top_k: 50,
-        repetition_penalty: 1.1,
+        repetition_penalty: 1.15,
       },
     };
 

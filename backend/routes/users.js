@@ -1,10 +1,17 @@
 // User Routes for FlacronAI
 const express = require('express');
 const router = express.Router();
-const { getFirestore } = require('../config/firebase');
+const { getFirestore, getAuth } = require('../config/firebase');
 const { authenticateToken } = require('../middleware/auth');
 const { getUserUsage } = require('../services/reportService');
-const { getTier, getAllTiers } = require('../config/tiers');
+const { getTier, getAllTiers, hasApiAccess, getMaxApiKeys } = require('../config/tiers');
+const {
+  createApiKey,
+  getUserApiKeys,
+  revokeApiKey,
+  getApiKeyUsage,
+  getApiUsageAnalytics
+} = require('../services/apiKeyService');
 
 /**
  * GET /api/users/profile
@@ -206,6 +213,315 @@ router.post('/upgrade', async (req, res) => {
 
   } catch (error) {
     console.error('Upgrade tier error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// API Key Management Endpoints
+// ============================================
+
+/**
+ * POST /api/users/api-keys
+ * Generate a new API key (Protected - requires auth)
+ */
+router.post('/api-keys', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { name } = req.body;
+
+    const keyName = name || `API Key ${new Date().toLocaleDateString()}`;
+
+    const result = await createApiKey(userId, keyName);
+
+    if (!result.success) {
+      const statusCode = result.code === 'NO_API_ACCESS' ? 403 : 400;
+      return res.status(statusCode).json(result);
+    }
+
+    res.status(201).json(result);
+
+  } catch (error) {
+    console.error('Generate API key error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/users/api-keys
+ * Get all API keys for the authenticated user (Protected)
+ */
+router.get('/api-keys', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    // Get user's tier info
+    const db = getFirestore();
+    const userDoc = await db.collection('users').doc(userId).get();
+    const userData = userDoc.data();
+    const userTier = userData.tier || 'starter';
+
+    // Check if user has API access
+    if (!hasApiAccess(userTier)) {
+      return res.status(403).json({
+        success: false,
+        error: 'API access is not available on your current plan',
+        code: 'NO_API_ACCESS',
+        currentTier: userTier,
+        hint: 'Upgrade to Professional or higher to access API keys'
+      });
+    }
+
+    const result = await getUserApiKeys(userId);
+
+    if (!result.success) {
+      return res.status(500).json(result);
+    }
+
+    // Add tier limits info
+    const maxKeys = getMaxApiKeys(userTier);
+    result.limits = {
+      maxKeys: maxKeys === -1 ? 'Unlimited' : maxKeys,
+      currentCount: result.count,
+      canCreateMore: maxKeys === -1 || result.count < maxKeys
+    };
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('Get API keys error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/users/api-keys/:keyId
+ * Revoke an API key (Protected)
+ */
+router.delete('/api-keys/:keyId', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { keyId } = req.params;
+
+    if (!keyId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Key ID is required'
+      });
+    }
+
+    const result = await revokeApiKey(keyId, userId);
+
+    if (!result.success) {
+      const statusCode = result.error === 'Unauthorized - this key does not belong to you' ? 403 : 400;
+      return res.status(statusCode).json(result);
+    }
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('Revoke API key error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/users/api-keys/:keyId/usage
+ * Get usage stats for a specific API key (Protected)
+ */
+router.get('/api-keys/:keyId/usage', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { keyId } = req.params;
+
+    const result = await getApiKeyUsage(keyId, userId);
+
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('Get API key usage error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/users/api-usage
+ * Get overall API usage analytics for the user (Protected)
+ */
+router.get('/api-usage', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const days = parseInt(req.query.days) || 30;
+
+    const result = await getApiUsageAnalytics(userId, days);
+
+    if (!result.success) {
+      return res.status(500).json(result);
+    }
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('Get API usage error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/users/api-access
+ * Check if user has API access and get limits (Protected)
+ */
+router.get('/api-access', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const db = getFirestore();
+    const userDoc = await db.collection('users').doc(userId).get();
+
+    if (!userDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+
+    const userData = userDoc.data();
+    const userTier = userData.tier || 'starter';
+    const tierConfig = getTier(userTier);
+
+    res.json({
+      success: true,
+      apiAccess: {
+        hasAccess: tierConfig.apiAccess || false,
+        tier: userTier,
+        tierName: tierConfig.name,
+        limits: {
+          callsPerHour: tierConfig.apiCallsPerHour || 0,
+          callsPerMonth: tierConfig.apiCallsPerMonth === -1 ? 'Unlimited' : tierConfig.apiCallsPerMonth || 0,
+          maxApiKeys: tierConfig.maxApiKeys === -1 ? 'Unlimited' : tierConfig.maxApiKeys || 0
+        },
+        features: {
+          webhooks: tierConfig.features?.webhooks || false,
+          customIntegration: tierConfig.features?.customIntegration || false
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get API access error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * PUT /api/users/change-password
+ * Change user password (Protected)
+ */
+router.put('/change-password', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'New password must be at least 6 characters'
+      });
+    }
+
+    // Update password in Firebase Auth
+    const auth = getAuth();
+    await auth.updateUser(userId, {
+      password: newPassword
+    });
+
+    // Update user document
+    const db = getFirestore();
+    await db.collection('users').doc(userId).update({
+      passwordChangedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
+    console.log(`✅ Password changed for user ${userId}`);
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * PUT /api/users/update-name
+ * Update user display name (Protected)
+ */
+router.put('/update-name', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { displayName } = req.body;
+
+    if (!displayName || displayName.trim().length < 2) {
+      return res.status(400).json({
+        success: false,
+        error: 'Display name must be at least 2 characters'
+      });
+    }
+
+    // Update in Firebase Auth
+    const auth = getAuth();
+    await auth.updateUser(userId, {
+      displayName: displayName.trim()
+    });
+
+    // Update in Firestore
+    const db = getFirestore();
+    await db.collection('users').doc(userId).update({
+      displayName: displayName.trim(),
+      updatedAt: new Date().toISOString()
+    });
+
+    console.log(`✅ Display name updated for user ${userId}: ${displayName}`);
+
+    res.json({
+      success: true,
+      message: 'Display name updated successfully',
+      displayName: displayName.trim()
+    });
+
+  } catch (error) {
+    console.error('Update name error:', error);
     res.status(500).json({
       success: false,
       error: error.message

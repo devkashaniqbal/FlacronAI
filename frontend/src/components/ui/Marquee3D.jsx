@@ -149,7 +149,7 @@ const Marquee3D = () => {
       <style jsx>{`
         .marquee-3d-container {
           width: 100%;
-          background: #000000;
+          background: #FFFFFF;
           padding: 6rem 0;
           overflow: hidden;
           position: relative;
@@ -165,14 +165,14 @@ const Marquee3D = () => {
         .marquee-3d-title {
           font-size: clamp(2rem, 4vw, 3rem);
           font-weight: 800;
-          color: #FFFFFF;
+          color: #000000;
           margin: 0 0 1rem 0;
           letter-spacing: -0.02em;
         }
 
         .marquee-3d-subtitle {
           font-size: 1.1rem;
-          color: rgba(255, 255, 255, 0.6);
+          color: rgba(0, 0, 0, 0.6);
           margin: 0;
         }
 
