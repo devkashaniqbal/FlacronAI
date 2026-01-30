@@ -235,41 +235,6 @@ const Home = () => {
         </div>
       </motion.section>
 
-      {/* Trust / Credibility Section */}
-      <section className="trust-section">
-        <div className="container">
-          <motion.div
-            className="trust-content"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <p className="trust-title">Trusted by Insurance Professionals</p>
-            <div className="trust-badges">
-              <div className="trust-badge">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#FF7C08" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span>IBM Watson Partner</span>
-              </div>
-              <div className="trust-badge">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#FF7C08" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span>Microsoft Certified</span>
-              </div>
-              <div className="trust-badge">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#FF7C08" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span>Enterprise Security</span>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
       {/* Features Section - Bento Grid */}
       <section className="features-elite" id="features">
         <div className="container">
