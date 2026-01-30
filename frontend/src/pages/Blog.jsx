@@ -73,8 +73,6 @@ const Blog = () => {
     }
   ];
 
-  const categories = ['All', 'Industry Insights', 'Product Updates', 'Best Practices', 'Technology', 'Security', 'Case Studies'];
-
   return (
     <>
       <Navbar />
@@ -95,39 +93,6 @@ const Blog = () => {
               <p style={{ fontSize: '1.25rem', color: 'rgba(0, 0, 0, 0.7)', lineHeight: '1.6' }}>
                 Stay updated with the latest insights, product updates, and industry trends in insurance technology.
               </p>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* Categories */}
-        <section style={{ padding: '40px 0' }}>
-          <div className="container">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}
-            >
-              {categories.map((category, index) => (
-                <button
-                  key={index}
-                  style={{
-                    padding: '0.5rem 1.5rem',
-                    background: index === 0 ? '#FF7C08' : '#FFFFFF',
-                    color: index === 0 ? '#FFFFFF' : '#000000',
-                    border: `1px solid ${index === 0 ? '#FF7C08' : 'rgba(255, 124, 8, 0.3)'}`,
-                    borderRadius: '6px',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  {category}
-                </button>
-              ))}
             </motion.div>
           </div>
         </section>
