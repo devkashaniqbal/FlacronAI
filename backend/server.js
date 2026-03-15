@@ -23,6 +23,8 @@ const allowedOrigins = [
   'http://localhost:3001',
   'http://localhost:5174',
   'https://flacronai.vercel.app',
+  'https://flacronai.com',
+  'https://www.flacronai.com',
 ];
 
 app.use(cors({
