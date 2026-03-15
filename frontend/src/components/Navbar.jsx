@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Zap, ChevronDown } from 'lucide-react';
+import { Menu, X, Zap, ChevronDown, LogOut, User, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import TierBadge from './TierBadge.jsx';
 
 const Navbar = ({ transparent = false }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
   const { isAuthenticated, user, userProfile, logout, tier } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -29,6 +31,17 @@ const Navbar = ({ transparent = false }) => {
   }, []);
 
   useEffect(() => setMobileOpen(false), [location]);
+  useEffect(() => setUserMenuOpen(false), [location]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const navLinks = [
     { label: 'Features', href: '/#features' },
@@ -79,10 +92,53 @@ const Navbar = ({ transparent = false }) => {
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated ? (
-              <>
-                <TierBadge tier={tier} />
-                <Link to="/dashboard" className="btn-primary text-sm py-2 px-5">Dashboard</Link>
-              </>
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenuOpen(p => !p)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-100 transition-colors"
+                >
+                  <div className="w-7 h-7 rounded-full bg-orange-500/20 flex items-center justify-center text-sm font-bold text-orange-500">
+                    {(userProfile?.displayName || user?.email || 'U')[0].toUpperCase()}
+                  </div>
+                  <TierBadge tier={tier} />
+                  <ChevronDown className={`w-3.5 h-3.5 text-gray-500 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <AnimatePresence>
+                  {userMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 w-52 bg-white border border-[#e5e7eb] rounded-xl shadow-xl shadow-black/10 overflow-hidden z-50"
+                    >
+                      <div className="px-4 py-3 border-b border-[#e5e7eb]">
+                        <p className="text-xs font-semibold text-gray-900 truncate">{userProfile?.displayName || 'My Account'}</p>
+                        <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                      </div>
+                      <div className="py-1">
+                        <Link to="/dashboard" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                          <Zap className="w-4 h-4 text-orange-500" />
+                          Dashboard
+                        </Link>
+                        <Link to="/settings" className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                          <Settings className="w-4 h-4 text-gray-400" />
+                          Settings
+                        </Link>
+                      </div>
+                      <div className="border-t border-[#e5e7eb] py-1">
+                        <button
+                          onClick={() => { setUserMenuOpen(false); logout(); }}
+                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Sign out
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             ) : (
               <>
                 <Link to="/auth" className="text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium">Sign in</Link>
@@ -131,9 +187,23 @@ const Navbar = ({ transparent = false }) => {
                   </Link>
                 )
               )}
-              <div className="pt-3 border-t border-[#e5e7eb] space-y-2">
+              <div className="pt-3 border-t border-[#e5e7eb] space-y-1">
                 {isAuthenticated ? (
-                  <Link to="/dashboard" className="block btn-primary text-center">Dashboard</Link>
+                  <>
+                    <div className="px-3 py-2 mb-1">
+                      <p className="text-xs font-semibold text-gray-900 truncate">{userProfile?.displayName || 'My Account'}</p>
+                      <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                    </div>
+                    <Link to="/dashboard" className="block px-3 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm">Dashboard</Link>
+                    <Link to="/settings" className="block px-3 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm">Settings</Link>
+                    <button
+                      onClick={logout}
+                      className="w-full text-left px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm flex items-center gap-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign out
+                    </button>
+                  </>
                 ) : (
                   <>
                     <Link to="/auth" className="block text-center py-2.5 text-gray-600 hover:text-gray-900">Sign in</Link>
