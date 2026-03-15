@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #ffffff;
+    color: #111827;
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track { background: #ffffff; }
+  ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #f97316; }
+}
+
+@layer components {
+  .glass {
+    @apply backdrop-blur-sm bg-gray-100 border border-gray-200;
+  }
+  .glass-dark {
+    @apply backdrop-blur-sm bg-gray-100 border border-gray-100;
+  }
+  .btn-primary {
+    @apply bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-orange-500/20 hover:shadow-orange-500/40 active:scale-95;
+  }
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-100 text-gray-900 font-medium px-6 py-3 rounded-xl border border-gray-300 transition-all duration-200 active:scale-95;
+  }
+  .btn-danger {
+    @apply bg-red-50 hover:bg-red-100 text-red-600 font-medium px-6 py-3 rounded-xl border border-red-200 transition-all duration-200;
+  }
+  .card {
+    @apply bg-[#f8f8f8] border border-[#e5e7eb] rounded-2xl;
+  }
+  .input {
+    @apply w-full bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all;
+  }
+  .label {
+    @apply block text-sm font-medium text-gray-600 mb-2;
+  }
+  .tier-badge-starter {
+    @apply bg-gray-500/20 text-gray-600 border border-gray-500/30 text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+  .tier-badge-professional {
+    @apply bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+  .tier-badge-agency {
+    @apply bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+  .tier-badge-enterprise {
+    @apply bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+  .skeleton {
+    @apply bg-gray-100 animate-pulse rounded-lg;
+  }
+  .section-header {
+    @apply text-2xl font-bold text-gray-900 mb-1;
+  }
+  .section-sub {
+    @apply text-gray-600 text-sm;
+  }
+  .gradient-text {
+    @apply bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent;
+  }
+}
+
+/* Gradient blob animation */
+@keyframes blob {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -30px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+}
+.animate-blob { animation: blob 10s infinite; }
+.animation-delay-2000 { animation-delay: 2s; }
+.animation-delay-4000 { animation-delay: 4s; }
+
+/* Custom checkbox */
+input[type="checkbox"] {
+  accent-color: #f97316;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* React Hot Toast dark theme */
+.react-hot-toast { font-family: 'Inter', sans-serif !important; }

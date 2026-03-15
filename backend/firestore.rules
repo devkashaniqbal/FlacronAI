@@ -1,0 +1,84 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.email == 'admin@flacronai.com';
+    }
+
+    function getUserTier() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tier;
+    }
+
+    function isEnterprise() {
+      return isAuthenticated() && getUserTier() == 'enterprise';
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Reports collection — scoped to userId
+    match /reports/{reportId} {
+      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow read: if isAdmin();
+    }
+
+    // API Keys — scoped to userId
+    match /apiKeys/{keyId} {
+      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // API Usage — append-only for authenticated users
+    match /apiUsage/{usageId} {
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow update, delete: if false; // immutable
+    }
+
+    // CRM Collections — scoped to userId
+    match /crmClients/{clientId} {
+      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+
+    match /crmAppointments/{apptId} {
+      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+
+    match /crmClaims/{claimId} {
+      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Sales Leads — write-only for unauthenticated (contact form), read for admin
+    match /salesLeads/{leadId} {
+      allow create: if true; // anyone can submit contact form
+      allow read, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Enterprise Clients — scoped to userId, enterprise tier only
+    match /enterpriseClients/{clientId} {
+      allow read, write: if isAuthenticated() && resource.data.userId == request.auth.uid && isEnterprise();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && isEnterprise();
+      allow read: if isAdmin();
+    }
+  }
+}
