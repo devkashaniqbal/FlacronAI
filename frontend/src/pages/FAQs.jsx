@@ -36,7 +36,7 @@ const FAQS = [
   {
     category: 'Billing',
     q: 'What are the plan differences?',
-    a: 'Starter: 5 free reports/month with watermark. Professional ($39.99/mo): 50 reports, no watermark, all export formats. Agency ($99.99/mo): 200 reports, full CRM suite, API access. Enterprise ($499/mo): Unlimited reports, white-label portal, dedicated support, custom AI training.',
+    a: 'Starter: 5 free reports/month with watermark. Professional ($39.99/mo): 50 reports, no watermark, all export formats, API access. Agency ($99.99/mo): 200 reports, full CRM suite, API access. Enterprise ($499/mo): Unlimited reports, white-label portal, dedicated support, custom AI training.',
   },
   {
     category: 'Billing',
@@ -90,7 +90,7 @@ const FAQS = [
   {
     category: 'API',
     q: 'Which plans include API access?',
-    a: 'API access is available on Agency and Enterprise plans. Starter and Professional users can access the web interface only.',
+    a: 'API access is available on Professional, Agency, and Enterprise plans. Starter users can access the web interface only.',
   },
   {
     category: 'API',

@@ -15,7 +15,7 @@ const TIERS = {
   professional: {
     name: 'Professional',
     reportsPerMonth: 50,
-    apiAccess: false,
+    apiAccess: true,
     whiteLabel: false,
     watermark: false,
     customLogo: false,

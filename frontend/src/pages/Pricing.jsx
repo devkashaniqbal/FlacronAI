@@ -39,7 +39,7 @@ const PLANS = [
       { label: 'No watermarks', included: true },
       { label: 'Priority email support', included: true },
       { label: 'Report history & search', included: true },
-      { label: 'API access', included: false },
+      { label: 'API access', included: true },
       { label: 'CRM features', included: false },
       { label: 'White-label portal', included: false },
       { label: 'Dedicated support', included: false },
@@ -89,7 +89,7 @@ const COMPARISON_FEATURES = [
   { label: 'Export formats', starter: 'PDF', professional: 'PDF, DOCX, HTML', agency: 'All', enterprise: 'All' },
   { label: 'Watermarks', starter: 'Yes', professional: 'No', agency: 'No', enterprise: 'No' },
   { label: 'CRM', starter: false, professional: false, agency: true, enterprise: true },
-  { label: 'API Access', starter: false, professional: false, agency: true, enterprise: true },
+  { label: 'API Access', starter: false, professional: true, agency: true, enterprise: true },
   { label: 'White-label', starter: false, professional: false, agency: false, enterprise: true },
   { label: 'Support', starter: 'Email', professional: 'Priority email', agency: 'Priority', enterprise: 'Dedicated' },
 ];
