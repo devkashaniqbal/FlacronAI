@@ -55,11 +55,19 @@ const Auth = () => {
       }
       navigate('/dashboard');
     } catch (err) {
-      const msg = err?.code === 'auth/user-not-found' || err?.code === 'auth/wrong-password'
-        ? 'Invalid email or password'
-        : err?.code === 'auth/email-already-in-use'
-        ? 'Email already registered'
-        : err?.message || 'Authentication failed';
+      const code = err?.code;
+      const msg =
+        code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential'
+          ? 'Invalid email or password'
+          : code === 'auth/email-already-in-use'
+          ? 'Email already registered. Please sign in instead.'
+          : code === 'auth/account-exists-with-different-credential'
+          ? 'An account with this email already exists. Please sign in with your email and password.'
+          : code === 'auth/too-many-requests'
+          ? 'Too many failed attempts. Please try again later or reset your password.'
+          : code === 'auth/invalid-email'
+          ? 'Invalid email address'
+          : err?.message || 'Authentication failed';
       toast.error(msg);
       setErrors({ general: msg });
     } finally {
@@ -74,7 +82,21 @@ const Auth = () => {
       toast.success('Signed in with Google!');
       navigate('/dashboard');
     } catch (err) {
-      toast.error('Google sign-in failed. Please try again.');
+      if (
+        err?.code === 'auth/account-exists-with-different-credential' ||
+        err?.code === 'auth/email-already-in-use'
+      ) {
+        const msg = 'An account with this email already exists. Please sign in with your email and password instead.';
+        toast.error(msg, { duration: 5000 });
+        setErrors({ general: msg });
+        setMode('login');
+      } else if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        // user closed the popup — silent, no error toast
+      } else if (err?.code === 'auth/popup-blocked') {
+        toast.error('Pop-up was blocked by your browser. Please allow pop-ups for this site.');
+      } else {
+        toast.error('Google sign-in failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
