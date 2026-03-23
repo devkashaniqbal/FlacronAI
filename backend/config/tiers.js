@@ -73,11 +73,17 @@ const canGenerate = (userTier, reportsThisMonth) => {
 
 const getStripePriceId = (tierName) => {
   const map = {
-    professional: process.env.STRIPE_PRICE_PROFESSIONAL,
-    agency: process.env.STRIPE_PRICE_AGENCY,
-    enterprise: process.env.STRIPE_PRICE_ENTERPRISE,
+    professional:        process.env.STRIPE_PRICE_PROFESSIONAL,
+    professional_annual: process.env.STRIPE_PRICE_PROFESSIONAL_ANNUAL,
+    agency:              process.env.STRIPE_PRICE_AGENCY,
+    agency_annual:       process.env.STRIPE_PRICE_AGENCY_ANNUAL,
+    enterprise:          process.env.STRIPE_PRICE_ENTERPRISE,
+    enterprise_annual:   process.env.STRIPE_PRICE_ENTERPRISE_ANNUAL,
   };
   return map[tierName] || null;
 };
 
-module.exports = { TIERS, TIER_ORDER, getTier, isAtLeastTier, canGenerate, getStripePriceId };
+// Resolve the base tier name from a tier key (strips _annual suffix)
+const getBaseTier = (tierName) => (tierName || '').replace('_annual', '') || 'starter';
+
+module.exports = { TIERS, TIER_ORDER, getTier, isAtLeastTier, canGenerate, getStripePriceId, getBaseTier };

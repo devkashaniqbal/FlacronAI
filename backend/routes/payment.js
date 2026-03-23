@@ -4,7 +4,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { getFirestore } = require('../config/firebase');
 const { authenticateToken } = require('../middleware/auth');
 const { sendPaymentFailedEmail } = require('../services/emailService');
-const { getStripePriceId } = require('../config/tiers');
+const { getStripePriceId, getBaseTier } = require('../config/tiers');
 
 // POST /api/payment/create-checkout-session
 router.post('/create-checkout-session', authenticateToken, async (req, res) => {
@@ -76,7 +76,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
       case 'checkout.session.completed': {
         const session = event.data.object;
         const uid = session.metadata?.uid;
-        const tier = session.metadata?.tier;
+        const tier = getBaseTier(session.metadata?.tier); // strip _annual suffix
         if (uid && tier) {
           await db.collection('users').doc(uid).update({
             tier,
