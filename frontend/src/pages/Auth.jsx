@@ -5,7 +5,7 @@ import { Eye, EyeOff, Zap, Mail, Lock, User, ArrowRight, AlertCircle } from 'luc
 import { FcGoogle } from 'react-icons/fc';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext.jsx';
-import { authAPI } from '../services/api.js';
+import { authAPI, paymentAPI } from '../services/api.js';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -21,6 +21,22 @@ const Auth = () => {
   const [form, setForm] = useState({ email: '', password: '', confirmPassword: '', displayName: '' });
   const { login, register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+
+  const pendingPlan = searchParams.get('plan');
+
+  const handlePostAuth = async () => {
+    if (pendingPlan && pendingPlan !== 'starter') {
+      try {
+        const res = await paymentAPI.createCheckout(pendingPlan);
+        if (res.data?.url) { window.location.href = res.data.url; return; }
+      } catch {
+        toast.error('Account created! Redirecting to plans...');
+        navigate('/pricing');
+        return;
+      }
+    }
+    navigate('/dashboard');
+  };
 
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -53,7 +69,7 @@ const Auth = () => {
         await register(form.email, form.password, form.displayName);
         toast.success('Account created! Welcome to FlacronAI.');
       }
-      navigate('/dashboard');
+      await handlePostAuth();
     } catch (err) {
       const code = err?.code;
       const msg =
@@ -80,7 +96,7 @@ const Auth = () => {
     try {
       await loginWithGoogle();
       toast.success('Signed in with Google!');
-      navigate('/dashboard');
+      await handlePostAuth();
     } catch (err) {
       if (
         err?.code === 'auth/account-exists-with-different-credential' ||
@@ -136,6 +152,16 @@ const Auth = () => {
 
         {/* Card */}
         <div className="card p-8">
+          {/* Plan context banner */}
+          {pendingPlan && pendingPlan !== 'starter' && (
+            <div className="mb-6 px-4 py-3 bg-orange-50 border border-orange-200 rounded-xl text-sm text-orange-800">
+              <span className="font-semibold">
+                {pendingPlan.replace('_annual', '').charAt(0).toUpperCase() + pendingPlan.replace('_annual', '').slice(1)} Plan selected
+              </span>
+              {' '}— {mode === 'signup' ? 'create your account' : 'sign in'} to continue to payment.
+            </div>
+          )}
+
           {/* Tab toggle */}
           <div className="flex bg-gray-100 rounded-xl p-1 mb-8">
             {['login', 'signup'].map(m => (

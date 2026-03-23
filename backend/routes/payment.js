@@ -37,7 +37,7 @@ router.post('/create-checkout-session', authenticateToken, async (req, res) => {
       payment_method_types: ['card'],
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${process.env.FRONTEND_URL}/settings?tab=billing&success=true&tier=${tier}`,
+      success_url: `${process.env.FRONTEND_URL}/dashboard?upgrade=success&tier=${tier}`,
       cancel_url: `${process.env.FRONTEND_URL}/pricing?cancelled=true`,
       metadata: { uid: req.user.uid, tier },
       subscription_data: { metadata: { uid: req.user.uid, tier } },

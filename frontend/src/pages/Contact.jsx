@@ -113,7 +113,7 @@ export default function Contact() {
               {[
                 {
                   icon: Mail, title: 'Email Support',
-                  lines: ['support@flacronenterprises.com', 'support@flacronenterprises.com'],
+                  lines: ['support@flacronenterprises.com'],
                   color: 'text-orange-400 bg-orange-500/10',
                 },
                 {

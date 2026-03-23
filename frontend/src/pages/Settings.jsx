@@ -529,15 +529,15 @@ export default function Settings() {
                               {invoices.map(inv => (
                                 <tr key={inv.id} className="border-b border-[#e5e7eb]">
                                   <td className="px-3 py-3 text-sm text-gray-700">{new Date(inv.date).toLocaleDateString()}</td>
-                                  <td className="px-3 py-3 text-sm text-gray-900 font-medium">${(inv.amount / 100).toFixed(2)}</td>
+                                  <td className="px-3 py-3 text-sm text-gray-900 font-medium">${inv.amount.toFixed(2)}</td>
                                   <td className="px-3 py-3">
                                     <span className={`text-xs px-2 py-0.5 rounded-full ${inv.status === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
                                       {inv.status}
                                     </span>
                                   </td>
                                   <td className="px-3 py-3">
-                                    {inv.pdfUrl && (
-                                      <a href={inv.pdfUrl} target="_blank" rel="noreferrer" className="p-1.5 hover:bg-gray-100 rounded-lg inline-flex" title="Download PDF">
+                                    {inv.pdf && (
+                                      <a href={inv.pdf} target="_blank" rel="noreferrer" className="p-1.5 hover:bg-gray-100 rounded-lg inline-flex" title="Download PDF">
                                         <Download className="w-4 h-4 text-gray-600" />
                                       </a>
                                     )}

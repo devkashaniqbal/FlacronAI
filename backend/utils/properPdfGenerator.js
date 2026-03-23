@@ -271,6 +271,71 @@ const generatePDF = async (report, options = {}) => {
       flushTable(); // flush any remaining table
 
       // ══════════════════════════════════════════════════════════════════════
+      // PHOTO APPENDIX — embed uploaded images if present
+      // ══════════════════════════════════════════════════════════════════════
+      const validImagePaths = (report.imagePaths || []).filter(p => {
+        try { return p && fs.existsSync(p); } catch { return false; }
+      });
+
+      if (validImagePaths.length > 0) {
+        addPage();
+        doc.rect(0, 42, pageWidth, pageHeight - 74).fill('white');
+
+        // Section header
+        const hdrY = doc.y + 4;
+        doc.rect(margin - 5, hdrY, contentWidth + 10, 32).fill(accentHex);
+        doc.fontSize(12).fillColor('white').font('Helvetica-Bold')
+          .text('PHOTO DOCUMENTATION', margin + 5, hdrY + 10, { width: contentWidth - 10, lineBreak: false });
+        doc.y = hdrY + 48;
+
+        // Two-column grid
+        const colGap = 12;
+        const colW = (contentWidth - colGap) / 2;
+        const imgH = 160;
+        let col = 0;
+        let rowStartY = doc.y;
+
+        validImagePaths.forEach((imgPath, idx) => {
+          const x = margin + col * (colW + colGap);
+          const y = rowStartY;
+
+          // Ensure space for the image + caption
+          if (doc.y > pageHeight - 32 - imgH - 20 && col === 0) {
+            addPage();
+            rowStartY = doc.y;
+          }
+
+          // Image border/background
+          doc.rect(x, y, colW, imgH).fill('#f8fafc').stroke('#e2e8f0');
+
+          try {
+            doc.image(imgPath, x + 4, y + 4, { width: colW - 8, height: imgH - 8, fit: [colW - 8, imgH - 8], align: 'center', valign: 'center' });
+          } catch {
+            // If image can't be embedded, draw placeholder text
+            doc.fontSize(8).fillColor('#94a3b8').font('Helvetica')
+              .text('Image unavailable', x, y + imgH / 2 - 5, { width: colW, align: 'center', lineBreak: false });
+          }
+
+          // Caption
+          doc.fontSize(7).fillColor('#64748b').font('Helvetica')
+            .text(`Photo ${idx + 1}`, x, y + imgH + 3, { width: colW, align: 'center', lineBreak: false });
+
+          if (col === 0) {
+            col = 1;
+          } else {
+            col = 0;
+            rowStartY += imgH + 24;
+            doc.y = rowStartY;
+          }
+        });
+
+        // Advance past last row if it ended on the right column
+        if (col === 1) {
+          doc.y = rowStartY + imgH + 24;
+        }
+      }
+
+      // ══════════════════════════════════════════════════════════════════════
       // SIGNATURE PAGE
       // ══════════════════════════════════════════════════════════════════════
       addPage();

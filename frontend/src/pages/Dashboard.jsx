@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   FileText, Upload, ChevronRight, ChevronLeft, X, Download, RefreshCw,
@@ -16,7 +16,7 @@ import api from '../services/api';
 
 const LOSS_TYPES = ['Water Damage', 'Fire', 'Wind', 'Hail', 'Mold', 'Vandalism', 'Other'];
 const REPORT_TYPES = ['Initial', 'Supplemental', 'Final', 'Re-Inspection'];
-const STATUSES = ['All', 'completed', 'processing', 'failed'];
+const STATUSES = ['All', 'completed', 'processing', 'failed', 'archived'];
 
 const GENERATION_STEPS = [
   'Uploading photos...',
@@ -208,6 +208,36 @@ function ReportDetailModal({ report, onClose }) {
 export default function Dashboard() {
   const { user, userProfile, tier, canGenerate, reportsRemaining, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Detect post-payment redirect from Stripe and show confirmation
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('upgrade') === 'success') {
+      const upgradedTier = params.get('tier');
+      // Clean the query string immediately so a page refresh doesn't re-toast
+      navigate('/dashboard', { replace: true });
+
+      // Poll until Firestore reflects the new tier (Stripe webhook may lag a few seconds)
+      let attempts = 0;
+      const maxAttempts = 6;
+      const poll = async () => {
+        attempts++;
+        const profile = await refreshProfile();
+        const currentTier = profile?.tier || 'starter';
+        if (!upgradedTier || currentTier === upgradedTier || attempts >= maxAttempts) {
+          toast.success(
+            upgradedTier
+              ? `Plan upgraded to ${upgradedTier.charAt(0).toUpperCase() + upgradedTier.slice(1)}! Welcome aboard.`
+              : 'Plan upgraded successfully!'
+          );
+        } else {
+          setTimeout(poll, 2000);
+        }
+      };
+      setTimeout(poll, 1500);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [activeView, setActiveView] = useState('generate');
   const [step, setStep] = useState(1);
@@ -374,7 +404,7 @@ export default function Dashboard() {
 
   const handleDeleteReport = async (id) => {
     try {
-      await reportsAPI.delete(id);
+      await reportsAPI.delete(id, true);
       toast.success('Report deleted');
       fetchReports();
     } catch { toast.error('Delete failed'); }
@@ -383,7 +413,7 @@ export default function Dashboard() {
   const handleBulkDelete = async () => {
     if (!selectedIds.length) return;
     try {
-      await Promise.all(selectedIds.map(id => reportsAPI.delete(id)));
+      await Promise.all(selectedIds.map(id => reportsAPI.delete(id, true)));
       toast.success(`Deleted ${selectedIds.length} reports`);
       setSelectedIds([]);
       fetchReports();
@@ -533,15 +563,42 @@ export default function Dashboard() {
 
         {/* Main */}
         <main className="flex-1 overflow-auto">
+
+          {/* Mobile usage bar — visible only below md (sidebar is hidden there) */}
+          <div className="md:hidden border-b border-[#e5e7eb] bg-[#f8f8f8] px-4 py-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white font-bold text-xs shrink-0">
+                  {(userProfile?.displayName || user?.email || 'U')[0].toUpperCase()}
+                </div>
+                <span className="text-sm font-semibold text-gray-800 truncate max-w-[140px]">
+                  {userProfile?.displayName || 'Dashboard'}
+                </span>
+                <TierBadge tier={tier} />
+              </div>
+              <span className="text-xs font-semibold text-gray-600 shrink-0">
+                {reportsRemaining === -1 ? '∞ remaining' : `${reportsRemaining} / ${tierLimit} left`}
+              </span>
+            </div>
+            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  usagePercent >= 90 ? 'bg-red-500' : usagePercent >= 70 ? 'bg-amber-400' : 'bg-orange-500'
+                }`}
+                style={{ width: `${tierLimit === -1 ? 0 : usagePercent}%` }}
+              />
+            </div>
+          </div>
+
           <AnimatePresence mode="wait">
             {activeView === 'generate' && (
               <motion.div key="generate" className="p-6 max-w-5xl mx-auto"
                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
 
                 {tier === 'starter' && (
-                  <div className="mb-4 px-4 py-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center gap-3">
-                    <AlertCircle className="w-4 h-4 text-yellow-400 shrink-0" />
-                    <p className="text-sm text-yellow-300">Starter plan reports include a FlacronAI watermark. <button onClick={() => navigate('/pricing')} className="underline font-semibold">Upgrade</button> to remove.</p>
+                  <div className="mb-4 px-4 py-3 rounded-xl bg-amber-50 border border-amber-300 flex items-center gap-3">
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <p className="text-sm text-amber-800 font-medium">Starter plan reports include a FlacronAI watermark. <button onClick={() => navigate('/pricing')} className="underline font-semibold text-orange-600 hover:text-orange-700">Upgrade</button> to remove.</p>
                   </div>
                 )}
 
@@ -971,7 +1028,7 @@ export default function Dashboard() {
                   </div>
                   <select className="input w-auto" value={statusFilter}
                     onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
-                    {STATUSES.map(s => <option key={s} value={s}>{s === 'All' ? 'All Status' : s}</option>)}
+                    {STATUSES.map(s => <option key={s} value={s}>{s === 'All' ? 'All Status' : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                   </select>
                 </div>
 

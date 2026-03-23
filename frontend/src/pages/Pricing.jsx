@@ -234,7 +234,7 @@ export default function Pricing() {
   const navigate = useNavigate();
 
   const handleCheckout = async (planId) => {
-    if (!isAuthenticated) { navigate('/auth?redirect=/pricing'); return; }
+    if (!isAuthenticated) { navigate(`/auth?mode=signup&plan=${planId}${annual ? '_annual' : ''}`); return; }
     if (planId === 'enterprise') { setShowSalesModal(true); return; }
     if (planId === 'starter') return;
     setLoadingTier(planId);

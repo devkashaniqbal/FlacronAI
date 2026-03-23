@@ -62,24 +62,25 @@ router.get('/profile', authenticateToken, async (req, res) => {
 
 // PUT /api/users/profile
 router.put('/profile', authenticateToken, [
-  body('displayName').optional().trim().isLength({ min: 1, max: 100 }),
-  body('phone').optional().trim(),
-  body('company').optional().trim(),
-  body('address').optional().trim(),
+  body('displayName').optional({ checkFalsy: true }).trim().isLength({ min: 1, max: 100 }),
+  body('phone').optional({ checkFalsy: true }).trim(),
+  body('company').optional({ checkFalsy: true }).trim(),
+  body('address').optional({ checkFalsy: true }).trim(),
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.mapped() });
 
   try {
     const db = getFirestore();
-    const { displayName, phone, company, address } = req.body;
+    const { displayName, phone, company, address, notifications } = req.body;
     const updates = { updatedAt: new Date().toISOString() };
-    if (displayName !== undefined) updates.displayName = displayName;
+    if (displayName) updates.displayName = displayName;
     if (phone !== undefined) updates.phone = phone;
     if (company !== undefined) updates.company = company;
     if (address !== undefined) updates.address = address;
+    if (notifications !== undefined) updates.notifications = notifications;
 
-    await db.collection('users').doc(req.user.uid).update(updates);
+    await db.collection('users').doc(req.user.uid).set(updates, { merge: true });
     if (displayName) await getAuth().updateUser(req.user.uid, { displayName });
 
     return res.json({ success: true, message: 'Profile updated', updates });

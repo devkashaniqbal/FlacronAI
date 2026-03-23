@@ -48,17 +48,17 @@ Generate a thorough, professional report following this EXACT structure with all
 ## SECTION 3: PROPERTY DESCRIPTION
 ${propertyDetails
     ? `Based on the following property details provided by the adjuster, expand into a professional property description:\n${propertyDetails}`
-    : 'Provide a detailed description of the property type, construction, age, condition, and relevant physical characteristics based on the loss type and available information.'}
+    : `Write a professional property description for the ${lossType} loss site at ${propertyAddress}. Include: the type of structure (residential/commercial), likely construction type and materials, estimated age and condition, general layout, and any physical characteristics relevant to a ${lossType} loss assessment.`}
 
 ## SECTION 4: SCOPE OF LOSS / CAUSE OF LOSS
 ${lossDescription
     ? `Based on the following loss description provided by the adjuster, expand into a professional analysis:\n${lossDescription}\n\nAlso include analysis of coverage implications and contributing factors.`
-    : `Provide a detailed analysis of:
-- The cause of the reported loss
-- How the damage occurred
-- The sequence of events
-- Whether the cause is covered under standard insurance policy terms
-- Any contributing factors`}
+    : `Write a detailed professional analysis of this ${lossType} loss at ${propertyAddress} on ${lossDate}. Cover all of the following in full sentences and paragraphs:
+- The most probable cause of this ${lossType} loss and how it typically occurs
+- How the damage developed, spread, and progressed at this property
+- The likely sequence of events from the initial incident through discovery
+- Coverage analysis: whether this ${lossType} loss is covered under standard insurance policy terms and any relevant exclusions to consider
+- Contributing factors, pre-existing conditions, or aggravating circumstances relevant to this loss${additionalNotes ? `\n- Additional context from adjuster notes: ${additionalNotes}` : ''}`}
 
 ## SECTION 5: DAMAGE ASSESSMENT
 ${damagesObserved

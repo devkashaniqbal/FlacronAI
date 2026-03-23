@@ -40,8 +40,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    // Fallback: if Firebase doesn't respond in 3s (e.g. placeholder config), stop loading
-    const timeout = setTimeout(() => setLoading(false), 3000);
+    // Fallback: if Firebase doesn't respond in 10s (e.g. placeholder config, or slow
+    // network after a Stripe checkout redirect), stop loading rather than hanging forever.
+    const timeout = setTimeout(() => setLoading(false), 10000);
     let unsubscribe = () => {};
     try {
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {

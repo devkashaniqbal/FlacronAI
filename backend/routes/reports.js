@@ -165,7 +165,7 @@ router.post('/generate', authenticateAny, (req, res, next) => {
 router.get('/', authenticateAny, async (req, res) => {
   try {
     const db = getFirestore();
-    const { limit = 20, page = 1, lossType, status, startDate, endDate } = req.query;
+    const { limit = 20, page = 1, lossType, status, startDate, endDate, search } = req.query;
     const lim = Math.min(parseInt(limit), 100);
 
     const snapshot = await db.collection('reports').where('userId', '==', req.user.uid).get();
@@ -176,6 +176,19 @@ router.get('/', authenticateAny, async (req, res) => {
     });
 
     reports.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // Hide archived reports by default unless the caller explicitly requests them
+    if (status !== 'archived') {
+      reports = reports.filter(r => r.status !== 'archived');
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      reports = reports.filter(r =>
+        (r.claimNumber || '').toLowerCase().includes(q) ||
+        (r.insuredName || '').toLowerCase().includes(q) ||
+        (r.propertyAddress || '').toLowerCase().includes(q) ||
+        (r.lossType || '').toLowerCase().includes(q)
+      );
+    }
     if (lossType) reports = reports.filter(r => r.lossType === lossType);
     if (status) reports = reports.filter(r => r.status === status);
     if (startDate) reports = reports.filter(r => r.createdAt >= startDate);
@@ -265,7 +278,7 @@ router.post('/:id/export', authenticateAny, async (req, res) => {
   try {
     const db = getFirestore();
     const doc = await db.collection('reports').doc(req.params.id).get();
-    if (!doc.exists || doc.data().userId !== req.user.uid) {
+    if (!doc.exists || doc.data().userId !== req.user.uid || doc.data().status === 'archived') {
       return res.status(404).json({ success: false, error: 'Report not found', code: 'NOT_FOUND' });
     }
 

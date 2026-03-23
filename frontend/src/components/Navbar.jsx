@@ -47,6 +47,7 @@ const Navbar = ({ transparent = false }) => {
     { label: 'Features', href: '/#features' },
     { label: 'Pricing', href: '/pricing' },
     { label: 'Docs', href: '/docs/api' },
+    ...(isAuthenticated ? [{ label: 'Dashboard', href: '/dashboard' }] : []),
   ];
 
   const bgClass = scrolled || !transparent
@@ -81,7 +82,11 @@ const Navbar = ({ transparent = false }) => {
                 <Link
                   key={link.label}
                   to={link.href}
-                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium"
+                  className={`text-sm transition-colors font-medium ${
+                    location.pathname === link.href
+                      ? 'text-orange-500 font-semibold'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
                 >
                   {link.label}
                 </Link>
@@ -181,7 +186,11 @@ const Navbar = ({ transparent = false }) => {
                   <Link
                     key={link.label}
                     to={link.href}
-                    className="block px-3 py-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                    className={`block px-3 py-2.5 rounded-lg transition-colors ${
+                      location.pathname === link.href
+                        ? 'text-orange-500 font-semibold bg-orange-50'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
                   >
                     {link.label}
                   </Link>

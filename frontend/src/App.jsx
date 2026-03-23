@@ -1,8 +1,14 @@
-import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { Suspense, lazy, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
+
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+};
 
 // Lazy load all pages
 const Home = lazy(() => import('./pages/Home.jsx'));
@@ -49,6 +55,7 @@ const AuthRedirect = ({ children }) => {
 const App = () => {
   return (
     <ErrorBoundary>
+    <ScrollToTop />
     <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* Public routes */}

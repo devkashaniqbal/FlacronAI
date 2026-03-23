@@ -29,14 +29,27 @@ api.interceptors.request.use(
 );
 
 // Response interceptor — handle errors
-let isRetrying = false;
+let isRateLimitRetrying = false;
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const { response, config } = error;
 
-    // 401 — clear auth and redirect
-    if (response?.status === 401) {
+    // 401 — try a Firebase token force-refresh once before giving up
+    if (response?.status === 401 && !config._authRetry) {
+      config._authRetry = true;
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          // Force-refresh the token (handles expiry and post-redirect race conditions)
+          const freshToken = await user.getIdToken(true);
+          config.headers.Authorization = `Bearer ${freshToken}`;
+          return api(config);
+        }
+      } catch {
+        // Token refresh failed — fall through to logout
+      }
+      // No Firebase user or refresh failed — session is genuinely gone
       localStorage.removeItem('flac_token');
       if (!window.location.pathname.includes('/auth')) {
         window.location.href = '/auth';
@@ -45,11 +58,11 @@ api.interceptors.response.use(
     }
 
     // 429 — rate limited, retry once after delay
-    if (response?.status === 429 && !isRetrying && !config._retry) {
-      isRetrying = true;
+    if (response?.status === 429 && !isRateLimitRetrying && !config._retry) {
+      isRateLimitRetrying = true;
       config._retry = true;
       await new Promise(r => setTimeout(r, 2000));
-      isRetrying = false;
+      isRateLimitRetrying = false;
       return api(config);
     }
 
