@@ -168,6 +168,39 @@ router.post('/forgot-password', [body('email').isEmail().normalizeEmail()], asyn
   }
 });
 
+// POST /api/auth/send-verification
+router.post('/send-verification', authenticateToken, async (req, res) => {
+  try {
+    const { pendingPlan } = req.body;
+    const auth = getAuth();
+
+    // Gracefully handle already-verified users
+    const userRecord = await auth.getUser(req.user.uid);
+    if (userRecord.emailVerified) {
+      return res.json({ success: true, message: 'Email already verified' });
+    }
+
+    const continueUrl =
+      (process.env.FRONTEND_URL || 'http://localhost:5173') +
+      '/dashboard' +
+      (pendingPlan && pendingPlan !== 'starter' ? '?pending_plan=' + pendingPlan : '');
+
+    const link = await auth.generateEmailVerificationLink(req.user.email, { url: continueUrl });
+
+    const { sendEmailVerificationEmail } = require('../services/emailService');
+    const displayName = userRecord.displayName || req.user.email.split('@')[0];
+    await sendEmailVerificationEmail(req.user.email, displayName, link);
+
+    return res.json({ success: true, message: 'Verification email sent' });
+  } catch (err) {
+    if (err.code === 'auth/email-already-verified') {
+      return res.json({ success: true, message: 'Email already verified' });
+    }
+    console.error('send-verification error:', err);
+    return res.status(500).json({ success: false, error: 'Failed to send verification email', code: 'VERIFY_EMAIL_ERROR' });
+  }
+});
+
 // POST /api/auth/change-password
 router.post('/change-password', authenticateToken, [
   body('newPassword').isLength({ min: 6 }),

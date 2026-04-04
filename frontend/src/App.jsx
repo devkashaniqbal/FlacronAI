@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { useAuth } from './context/AuthContext.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
@@ -46,10 +46,22 @@ const PageLoader = () => (
 );
 
 const AuthRedirect = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, emailVerified, user } = useAuth();
+  const [searchParams] = useSearchParams();
+
   if (loading) return <PageLoader />;
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
-  return children;
+  if (!isAuthenticated) return children;
+
+  const pendingPlan = searchParams.get('plan');
+  const isGoogleUser = user?.providerData?.some(p => p.providerId === 'google.com');
+
+  // Don't redirect unverified email/password users — Auth.jsx shows verification screen
+  if (!emailVerified && !isGoogleUser) return children;
+
+  // Don't redirect if there's a pending paid plan — Auth.jsx handles checkout
+  if (pendingPlan && pendingPlan !== 'starter') return children;
+
+  return <Navigate to="/dashboard" replace />;
 };
 
 const App = () => {

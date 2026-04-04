@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Zap, Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Zap, Mail, Lock, User, ArrowRight, AlertCircle, RefreshCw, CheckCircle } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext.jsx';
 import { authAPI, paymentAPI } from '../services/api.js';
+import { auth } from '../config/firebase.js';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -17,18 +18,32 @@ const Auth = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
   const [errors, setErrors] = useState({});
+  const [authState, setAuthState] = useState('form'); // 'form' | 'verifying' | 'processing'
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const [form, setForm] = useState({ email: '', password: '', confirmPassword: '', displayName: '' });
-  const { login, register, loginWithGoogle } = useAuth();
+  const { login, register, loginWithGoogle, emailVerified, reloadUser } = useAuth();
   const navigate = useNavigate();
 
   const pendingPlan = searchParams.get('plan');
 
-  const handlePostAuth = async () => {
+  // Save pending plan to sessionStorage on mount so it survives auth redirects
+  useEffect(() => {
     if (pendingPlan && pendingPlan !== 'starter') {
+      sessionStorage.setItem('flac_pending_plan', pendingPlan);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handlePostAuth = useCallback(async () => {
+    const planToUse = pendingPlan || sessionStorage.getItem('flac_pending_plan');
+    if (planToUse && planToUse !== 'starter') {
       try {
-        const res = await paymentAPI.createCheckout(pendingPlan);
-        if (res.data?.url) { window.location.href = res.data.url; return; }
+        const res = await paymentAPI.createCheckout(planToUse);
+        if (res.data?.url) {
+          sessionStorage.removeItem('flac_pending_plan');
+          window.location.href = res.data.url;
+          return;
+        }
       } catch {
         toast.error('Account created! Redirecting to plans...');
         navigate('/pricing');
@@ -36,7 +51,7 @@ const Auth = () => {
       }
     }
     navigate('/dashboard');
-  };
+  }, [pendingPlan, navigate]);
 
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -57,6 +72,35 @@ const Auth = () => {
     return Object.keys(errs).length === 0;
   };
 
+  const handleResendVerification = async () => {
+    try {
+      await authAPI.sendVerification(pendingPlan || sessionStorage.getItem('flac_pending_plan'));
+      toast.success('Verification email sent!');
+      setResendCooldown(60);
+      const interval = setInterval(() => {
+        setResendCooldown(prev => {
+          if (prev <= 1) { clearInterval(interval); return 0; }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch {
+      toast.error('Failed to resend. Please try again.');
+    }
+  };
+
+  const handleCheckVerified = async () => {
+    setAuthState('processing');
+    await reloadUser();
+    // Small delay to ensure Firebase has synced
+    await new Promise(r => setTimeout(r, 500));
+    if (auth.currentUser?.emailVerified) {
+      await handlePostAuth();
+    } else {
+      setAuthState('verifying');
+      toast.error('Email not verified yet. Please check your inbox.');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
@@ -65,11 +109,14 @@ const Auth = () => {
       if (mode === 'login') {
         await login(form.email, form.password);
         toast.success('Welcome back!');
+        await handlePostAuth();
       } else {
         await register(form.email, form.password, form.displayName);
-        toast.success('Account created! Welcome to FlacronAI.');
+        toast.success('Account created! Please verify your email.');
+        // Fire verification email (don't block on this)
+        authAPI.sendVerification(pendingPlan || sessionStorage.getItem('flac_pending_plan')).catch(() => {});
+        setAuthState('verifying');
       }
-      await handlePostAuth();
     } catch (err) {
       const code = err?.code;
       const msg =
@@ -96,6 +143,7 @@ const Auth = () => {
     try {
       await loginWithGoogle();
       toast.success('Signed in with Google!');
+      // Google users are already verified — go straight to post-auth
       await handlePostAuth();
     } catch (err) {
       if (
@@ -132,6 +180,80 @@ const Auth = () => {
     }
   };
 
+  // ── Verification screen ──────────────────────────────────────────────────────
+  if (authState === 'verifying' || authState === 'processing') {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Background */}
+        <div className="absolute inset-0">
+          <div className="absolute top-1/4 -left-40 w-80 h-80 bg-orange-500/8 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-amber-500/8 rounded-full blur-3xl" />
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(249,115,22,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(249,115,22,0.02)_1px,transparent_1px)] bg-[size:48px_48px]" />
+        </div>
+
+        <div className="relative w-full max-w-md">
+          {/* Logo */}
+          <Link to="/" className="flex items-center justify-center gap-2.5 mb-8">
+            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/25">
+              <Zap className="w-5 h-5 text-gray-900" fill="white" />
+            </div>
+            <span className="font-bold text-xl text-gray-900">FlacronAI</span>
+          </Link>
+
+          <div className="card p-8 text-center">
+            <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <Mail className="w-8 h-8 text-orange-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Verify your email</h2>
+            <p className="text-gray-600 text-sm mb-6">
+              We sent a verification link to{' '}
+              <strong className="text-gray-900">{form.email}</strong>.
+              <br />Check your inbox and click the link to continue.
+            </p>
+
+            {authState === 'processing' ? (
+              <div className="flex items-center justify-center gap-2 py-3 mb-4 text-gray-600">
+                <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm">Checking verification status...</span>
+              </div>
+            ) : (
+              <button
+                onClick={handleCheckVerified}
+                className="btn-primary w-full flex items-center justify-center gap-2 mb-3"
+              >
+                <CheckCircle className="w-4 h-4" />
+                I've Verified My Email
+              </button>
+            )}
+
+            {resendCooldown > 0 ? (
+              <p className="text-gray-500 text-sm font-medium">Resend in {resendCooldown}s</p>
+            ) : (
+              <button
+                onClick={handleResendVerification}
+                className="btn-secondary w-full flex items-center justify-center gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Resend Verification Email
+              </button>
+            )}
+
+            <p className="mt-4 text-xs text-gray-500">
+              Wrong email?{' '}
+              <button
+                onClick={() => setAuthState('form')}
+                className="text-orange-500 hover:text-orange-600 font-medium underline"
+              >
+                Go back
+              </button>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Main auth form ───────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background */}

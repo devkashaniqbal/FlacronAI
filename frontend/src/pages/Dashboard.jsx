@@ -6,7 +6,7 @@ import {
   FileText, Upload, ChevronRight, ChevronLeft, X, Download, RefreshCw,
   Search, Trash2, Eye, Lock, ExternalLink, BarChart3, Users,
   Zap, Clock, AlertCircle, CheckCircle, Settings,
-  Star, Image as ImageIcon, CreditCard
+  Star, Image as ImageIcon, CreditCard, Check
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import TierBadge from '../components/TierBadge';
@@ -215,27 +215,61 @@ export default function Dashboard() {
     const params = new URLSearchParams(location.search);
     if (params.get('upgrade') === 'success') {
       const upgradedTier = params.get('tier');
-      // Clean the query string immediately so a page refresh doesn't re-toast
+      // Clean URL immediately so refresh doesn't re-trigger
       navigate('/dashboard', { replace: true });
 
-      // Poll until Firestore reflects the new tier (Stripe webhook may lag a few seconds)
+      // Poll Firestore until webhook updates the tier (Stripe webhooks can lag 2-10s)
       let attempts = 0;
-      const maxAttempts = 6;
+      const maxAttempts = 10;
       const poll = async () => {
         attempts++;
         const profile = await refreshProfile();
         const currentTier = profile?.tier || 'starter';
-        if (!upgradedTier || currentTier === upgradedTier || attempts >= maxAttempts) {
+
+        if (!upgradedTier || currentTier === upgradedTier) {
+          // Tier confirmed — show success and switch to billing view
           toast.success(
             upgradedTier
               ? `Plan upgraded to ${upgradedTier.charAt(0).toUpperCase() + upgradedTier.slice(1)}! Welcome aboard.`
               : 'Plan upgraded successfully!'
           );
+          setActiveView('billing');
+        } else if (attempts >= maxAttempts) {
+          // Webhook is taking too long — warn the user instead of falsely celebrating
+          toast(
+            'Payment received! Your plan may take a moment to update. Refresh the page if it still shows the old plan.',
+            { icon: '⏳', duration: 8000 }
+          );
+          setActiveView('billing');
         } else {
           setTimeout(poll, 2000);
         }
       };
-      setTimeout(poll, 1500);
+      setTimeout(poll, 2000);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle pending plan checkout after email verification redirect
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlPlan = params.get('pending_plan');
+    const storedPlan = sessionStorage.getItem('flac_pending_plan');
+    const planToCheckout = urlPlan || storedPlan;
+
+    if (planToCheckout && planToCheckout !== 'starter') {
+      // Clear immediately to prevent duplicate checkout attempts
+      sessionStorage.removeItem('flac_pending_plan');
+      if (urlPlan) navigate('/dashboard', { replace: true }); // Clean URL
+
+      paymentAPI.createCheckout(planToCheckout)
+        .then(res => {
+          if (res.data?.url) window.location.href = res.data.url;
+          else navigate('/pricing');
+        })
+        .catch(() => {
+          toast.error('Could not start checkout. Please select a plan from the pricing page.');
+          navigate('/pricing');
+        });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -256,6 +290,7 @@ export default function Dashboard() {
   const [totalPages, setTotalPages] = useState(1);
   const [detailReport, setDetailReport] = useState(null);
   const [billingInfo, setBillingInfo] = useState(null);
+  const [invoices, setInvoices] = useState([]);
   const [billingLoading, setBillingLoading] = useState(false);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
   const [previewing, setPreviewing] = useState(false);
@@ -434,10 +469,17 @@ export default function Dashboard() {
   const fetchBilling = async () => {
     setBillingLoading(true);
     try {
-      const res = await paymentAPI.getSubscription();
-      setBillingInfo(res.data?.subscription || res.data || null);
-    } catch { /* billing optional */ }
-    finally { setBillingLoading(false); }
+      const [subRes, invRes] = await Promise.all([
+        paymentAPI.getSubscription(),
+        paymentAPI.getInvoices(),
+      ]);
+      setBillingInfo(subRes.data?.subscription || null);
+      setInvoices(invRes.data?.invoices || []);
+    } catch (err) {
+      console.error('Billing fetch error:', err.message);
+    } finally {
+      setBillingLoading(false);
+    }
   };
 
   const navLinks = [
@@ -564,29 +606,74 @@ export default function Dashboard() {
         {/* Main */}
         <main className="flex-1 overflow-auto">
 
-          {/* Mobile usage bar — visible only below md (sidebar is hidden there) */}
-          <div className="md:hidden border-b border-[#e5e7eb] bg-[#f8f8f8] px-4 py-3">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white font-bold text-xs shrink-0">
-                  {(userProfile?.displayName || user?.email || 'U')[0].toUpperCase()}
-                </div>
-                <span className="text-sm font-semibold text-gray-800 truncate max-w-[140px]">
-                  {userProfile?.displayName || 'Dashboard'}
-                </span>
-                <TierBadge tier={tier} />
+          {/* Mobile/tablet usage panel — visible only below md breakpoint */}
+          <div className="md:hidden border-b border-[#e5e7eb] bg-[#f8f8f8]">
+            {/* User row */}
+            <div className="flex items-center gap-3 px-4 pt-3 pb-2">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                {(userProfile?.displayName || user?.email || 'U')[0].toUpperCase()}
               </div>
-              <span className="text-xs font-semibold text-gray-600 shrink-0">
-                {reportsRemaining === -1 ? '∞ remaining' : `${reportsRemaining} / ${tierLimit} left`}
-              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-gray-900 truncate leading-tight">
+                  {userProfile?.displayName || user?.email || 'Welcome'}
+                </p>
+                <p className="text-xs text-gray-500 truncate leading-tight">{user?.email}</p>
+              </div>
+              <TierBadge tier={tier} />
             </div>
-            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  usagePercent >= 90 ? 'bg-red-500' : usagePercent >= 70 ? 'bg-amber-400' : 'bg-orange-500'
-                }`}
-                style={{ width: `${tierLimit === -1 ? 0 : usagePercent}%` }}
-              />
+
+            {/* Stats row */}
+            <div className="grid grid-cols-3 gap-2 px-4 pb-2">
+              <div className="rounded-xl bg-white border border-gray-200 px-3 py-2 text-center shadow-sm">
+                <p className="text-lg font-bold text-orange-500 leading-none">{usedThisMonth}</p>
+                <p className="text-[10px] text-gray-500 mt-0.5">Used</p>
+              </div>
+              <div className="rounded-xl bg-white border border-gray-200 px-3 py-2 text-center shadow-sm">
+                <p className="text-lg font-bold text-gray-800 leading-none">
+                  {tierLimit === -1 ? '∞' : tierLimit}
+                </p>
+                <p className="text-[10px] text-gray-500 mt-0.5">Limit</p>
+              </div>
+              <div className="rounded-xl bg-white border border-gray-200 px-3 py-2 text-center shadow-sm">
+                <p className={`text-lg font-bold leading-none ${
+                  reportsRemaining === -1 ? 'text-green-500' :
+                  reportsRemaining === 0 ? 'text-red-500' :
+                  reportsRemaining <= 3 ? 'text-amber-500' : 'text-green-500'
+                }`}>
+                  {reportsRemaining === -1 ? '∞' : reportsRemaining}
+                </p>
+                <p className="text-[10px] text-gray-500 mt-0.5">Left</p>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div className="px-4 pb-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-medium text-gray-500">Monthly reports</span>
+                <span className="text-[10px] font-semibold text-gray-600">
+                  {tierLimit === -1 ? 'Unlimited plan' : `${usagePercent}% used`}
+                </span>
+              </div>
+              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    tierLimit === -1 ? 'bg-green-400' :
+                    usagePercent >= 90 ? 'bg-red-500' :
+                    usagePercent >= 70 ? 'bg-amber-400' : 'bg-orange-500'
+                  }`}
+                  style={{ width: tierLimit === -1 ? '100%' : `${usagePercent}%` }}
+                />
+              </div>
+              {reportsRemaining === 0 && tierLimit !== -1 && (
+                <p className="text-[10px] text-red-500 font-semibold mt-1">
+                  Monthly limit reached — <button onClick={() => navigate('/pricing')} className="underline">upgrade your plan</button>
+                </p>
+              )}
+              {reportsRemaining !== -1 && reportsRemaining > 0 && usagePercent >= 80 && (
+                <p className="text-[10px] text-amber-600 font-medium mt-1">
+                  ⚠️ {reportsRemaining} report{reportsRemaining !== 1 ? 's' : ''} remaining this month
+                </p>
+              )}
             </div>
           </div>
 
@@ -1038,8 +1125,21 @@ export default function Dashboard() {
                       <thead>
                         <tr className="border-b border-[#e5e7eb]">
                           <th className="px-4 py-3 text-left w-10">
-                            <input type="checkbox" onChange={e => setSelectedIds(e.target.checked ? reports.map(r => r.id) : [])}
-                              checked={selectedIds.length === reports.length && reports.length > 0} />
+                            <button
+                              onClick={() => setSelectedIds(selectedIds.length === reports.length && reports.length > 0 ? [] : reports.map(r => r.id))}
+                              className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors cursor-pointer ${
+                                selectedIds.length === reports.length && reports.length > 0
+                                  ? 'bg-orange-500 border-orange-500'
+                                  : selectedIds.length > 0
+                                    ? 'bg-orange-200 border-orange-400'
+                                    : 'border-gray-300 hover:border-orange-400 bg-white'
+                              }`}
+                            >
+                              {selectedIds.length === reports.length && reports.length > 0 && <Check className="w-3 h-3 text-white" />}
+                              {selectedIds.length > 0 && selectedIds.length < reports.length && (
+                                <div className="w-2.5 h-0.5 rounded-full bg-orange-500" />
+                              )}
+                            </button>
                           </th>
                           {['Claim #', 'Insured', 'Date', 'Loss Type', 'Status', 'Actions'].map(h => (
                             <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">{h}</th>
@@ -1064,8 +1164,17 @@ export default function Dashboard() {
                           <motion.tr key={r.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                             className="border-b border-[#e5e7eb] hover:bg-gray-100 transition-colors cursor-pointer"
                             onClick={() => setDetailReport(r)}>
-                            <td className="px-4 py-3" onClick={e => { e.stopPropagation(); toggleSelect(r.id); }}>
-                              <input type="checkbox" checked={selectedIds.includes(r.id)} onChange={() => toggleSelect(r.id)} />
+                            <td className="px-4 py-3 w-10" onClick={e => e.stopPropagation()}>
+                              <button
+                                onClick={() => toggleSelect(r.id)}
+                                className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors cursor-pointer ${
+                                  selectedIds.includes(r.id)
+                                    ? 'bg-orange-500 border-orange-500'
+                                    : 'border-gray-300 hover:border-orange-400 bg-white'
+                                }`}
+                              >
+                                {selectedIds.includes(r.id) && <Check className="w-3 h-3 text-white" />}
+                              </button>
                             </td>
                             <td className="px-4 py-3 text-sm font-mono text-orange-400">{r.claimNumber}</td>
                             <td className="px-4 py-3 text-sm text-gray-900">{r.insuredName}</td>
@@ -1143,7 +1252,7 @@ export default function Dashboard() {
 
                 {/* Current Plan */}
                 <div className="card p-6 mb-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-4">
                     <div>
                       <h2 className="text-base font-semibold text-gray-900">Current Plan</h2>
                       <p className="text-2xl font-bold text-orange-500 mt-1">{tier.charAt(0).toUpperCase() + tier.slice(1)}</p>
@@ -1152,40 +1261,102 @@ export default function Dashboard() {
                       </p>
                     </div>
                     {billingLoading ? (
-                      <div className="skeleton h-8 w-32" />
+                      <div className="skeleton h-12 w-36" />
                     ) : billingInfo ? (
                       <div className="text-right">
-                        <p className="text-xs text-gray-500">Status</p>
-                        <span className={`text-sm font-semibold px-2.5 py-1 rounded-full border ${
-                          billingInfo.status === 'active' ? 'bg-green-500/10 text-green-600 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'
-                        }`}>{billingInfo.status || 'Active'}</span>
+                        <p className="text-xs text-gray-500 mb-1">Subscription Status</p>
+                        <span className={`text-sm font-semibold px-3 py-1.5 rounded-full border ${
+                          billingInfo.status === 'active' ? 'bg-green-50 text-green-600 border-green-200' :
+                          billingInfo.status === 'cancelling' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                          'bg-gray-100 text-gray-600 border-gray-200'
+                        }`}>{billingInfo.status === 'cancelling' ? 'Cancels at period end' : billingInfo.status || 'Active'}</span>
                         {billingInfo.currentPeriodEnd && (
-                          <p className="text-xs text-gray-400 mt-1">Renews {new Date(billingInfo.currentPeriodEnd * 1000).toLocaleDateString()}</p>
+                          <p className="text-xs text-gray-400 mt-1.5">
+                            {billingInfo.cancelAtPeriodEnd ? 'Ends' : 'Renews'} {new Date(billingInfo.currentPeriodEnd).toLocaleDateString()}
+                          </p>
                         )}
                       </div>
-                    ) : null}
+                    ) : (
+                      <div className="text-right">
+                        <span className="text-sm font-semibold px-3 py-1.5 rounded-full border bg-gray-50 text-gray-500 border-gray-200">Free Plan</span>
+                      </div>
+                    )}
                   </div>
                   {tier !== 'enterprise' && (
                     <button onClick={() => navigate('/pricing')}
                       className="mt-4 btn-primary text-sm py-2 px-4 flex items-center gap-2">
-                      <Star className="w-4 h-4" /> Upgrade Plan
+                      <Star className="w-4 h-4" /> {tier === 'starter' ? 'Upgrade Plan' : 'Change Plan'}
                     </button>
                   )}
                 </div>
 
-                {/* Billing History placeholder */}
+                {/* Billing History */}
                 <div className="card p-6">
-                  <h2 className="text-base font-semibold text-gray-900 mb-4">Billing History</h2>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-base font-semibold text-gray-900">Billing History</h2>
+                    {!billingLoading && invoices.length > 0 && (
+                      <span className="text-xs text-gray-500">{invoices.length} invoice{invoices.length !== 1 ? 's' : ''}</span>
+                    )}
+                  </div>
                   {billingLoading ? (
-                    <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="skeleton h-10 w-full" />)}</div>
+                    <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="skeleton h-12 w-full rounded-xl" />)}</div>
+                  ) : invoices.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-gray-100">
+                            {['Date', 'Description', 'Amount', 'Status', 'Invoice'].map(h => (
+                              <th key={h} className="pb-2 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider pr-4">{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {invoices.map(inv => (
+                            <tr key={inv.id} className="border-b border-gray-50 last:border-0">
+                              <td className="py-3 pr-4 text-sm text-gray-700 whitespace-nowrap">
+                                {new Date(inv.date).toLocaleDateString()}
+                              </td>
+                              <td className="py-3 pr-4 text-sm text-gray-600 max-w-[180px] truncate">
+                                {inv.description || 'Subscription'}
+                              </td>
+                              <td className="py-3 pr-4 text-sm font-semibold text-gray-900 whitespace-nowrap">
+                                ${inv.amount.toFixed(2)} <span className="text-xs font-normal text-gray-400">{inv.currency}</span>
+                              </td>
+                              <td className="py-3 pr-4">
+                                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                                  inv.status === 'paid' ? 'bg-green-50 text-green-600 border-green-200' :
+                                  inv.status === 'open' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                                  'bg-gray-100 text-gray-500 border-gray-200'
+                                }`}>
+                                  {inv.status === 'paid' && <Check className="w-3 h-3" />}
+                                  {inv.status}
+                                </span>
+                              </td>
+                              <td className="py-3">
+                                {inv.pdf ? (
+                                  <a href={inv.pdf} target="_blank" rel="noreferrer"
+                                    className="inline-flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 font-medium">
+                                    <Download className="w-3.5 h-3.5" /> PDF
+                                  </a>
+                                ) : (
+                                  <span className="text-xs text-gray-300">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   ) : (
                     <div className="text-center py-8">
                       <CreditCard className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500 text-sm font-medium">No billing history yet</p>
-                      <p className="text-gray-400 text-xs mt-1">Invoices will appear here once you subscribe to a paid plan</p>
-                      <button onClick={() => navigate('/pricing')} className="mt-4 btn-secondary text-sm py-2 px-4">
-                        View Plans
-                      </button>
+                      <p className="text-gray-500 text-sm font-medium">No invoices yet</p>
+                      <p className="text-gray-400 text-xs mt-1">Invoices will appear here after your first payment</p>
+                      {tier === 'starter' && (
+                        <button onClick={() => navigate('/pricing')} className="mt-4 btn-secondary text-sm py-2 px-4">
+                          View Plans
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

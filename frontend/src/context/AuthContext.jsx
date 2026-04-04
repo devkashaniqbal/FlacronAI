@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [emailVerified, setEmailVerified] = useState(false);
 
   // Fetch profile via backend API (Admin SDK — bypasses Firestore rules)
   const fetchUserProfile = useCallback(async () => {
@@ -48,10 +49,12 @@ export const AuthProvider = ({ children }) => {
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         clearTimeout(timeout);
         setUser(firebaseUser);
+        setEmailVerified(firebaseUser?.emailVerified || false);
         if (firebaseUser) {
           await fetchUserProfile();
         } else {
           setUserProfile(null);
+          setEmailVerified(false);
         }
         setLoading(false);
       });
@@ -101,6 +104,13 @@ export const AuthProvider = ({ children }) => {
     if (user) return fetchUserProfile();
   }, [user, fetchUserProfile]);
 
+  const reloadUser = useCallback(async () => {
+    if (auth.currentUser) {
+      await auth.currentUser.reload();
+      setEmailVerified(auth.currentUser.emailVerified);
+    }
+  }, []);
+
   // Computed values
   const isAuthenticated = !!user && !loading;
   const tier = userProfile?.tier || 'starter';
@@ -118,6 +128,7 @@ export const AuthProvider = ({ children }) => {
     user,
     userProfile,
     loading,
+    emailVerified,
     login,
     loginWithGoogle,
     register,
@@ -125,6 +136,7 @@ export const AuthProvider = ({ children }) => {
     updateProfile,
     refreshProfile,
     fetchUserProfile,
+    reloadUser,
     isAuthenticated,
     tier,
     canGenerate,

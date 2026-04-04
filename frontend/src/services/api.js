@@ -78,6 +78,7 @@ export const authAPI = {
   logout: () => api.post('/auth/logout'),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
   changePassword: (newPassword) => api.post('/auth/change-password', { newPassword }),
+  sendVerification: (pendingPlan) => api.post('/auth/send-verification', { pendingPlan }),
 };
 
 export const reportsAPI = {

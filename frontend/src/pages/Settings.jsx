@@ -1,18 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
-  User, Lock, Key, Bell, CreditCard, Upload, Eye, EyeOff, Plus,
+  User, Lock, Key, Bell, CreditCard, Eye, EyeOff, Plus,
   Trash2, Copy, Check, AlertTriangle, ExternalLink, Download, X,
-  Shield, RefreshCw
+  Shield, RefreshCw, Mail
 } from 'lucide-react';
 import {
   reauthenticateWithCredential,
   EmailAuthProvider,
   updatePassword,
-  GoogleAuthProvider,
+  sendPasswordResetEmail,
   reauthenticateWithPopup,
+  GoogleAuthProvider,
 } from 'firebase/auth';
 import { auth } from '../config/firebase.js';
 import Navbar from '../components/Navbar';
@@ -92,12 +93,9 @@ export default function Settings() {
   const { userProfile, tier, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
-  const logoInputRef = useRef();
 
   // Profile state
   const [profileForm, setProfileForm] = useState({ displayName: '', phone: '', company: '', address: '' });
-  const [logoPreview, setLogoPreview] = useState(null);
-  const [logoFile, setLogoFile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
 
   // Security state
@@ -133,7 +131,6 @@ export default function Settings() {
         company: userProfile.company || '',
         address: userProfile.address || '',
       });
-      setLogoPreview(userProfile.logoUrl || null);
       setNotifications(userProfile.notifications || { reportGenerated: true, subscriptionRenewal: true, usageLimitWarning: true });
     }
   }, [userProfile]);
@@ -167,47 +164,35 @@ export default function Settings() {
     setProfileLoading(true);
     try {
       await usersAPI.updateProfile(profileForm);
-      if (logoFile) {
-        const fd = new FormData(); fd.append('logo', logoFile);
-        await usersAPI.uploadLogo(fd);
-      }
       await refreshProfile();
       toast.success('Profile updated successfully');
-    } catch { toast.error('Failed to update profile'); }
-    finally { setProfileLoading(false); }
-  };
-
-  const handleLogoChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) { toast.error('Logo must be under 2MB'); return; }
-    setLogoFile(file);
-    setLogoPreview(URL.createObjectURL(file));
+    } catch (err) {
+      const msg = err?.response?.data?.error || err?.message || 'Failed to update profile';
+      toast.error(msg);
+    } finally { setProfileLoading(false); }
   };
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     if (!pwForm.currentPassword) { toast.error('Enter your current password'); return; }
-    if (pwForm.newPassword !== pwForm.confirmPassword) { toast.error('New passwords do not match'); return; }
+    if (!pwForm.newPassword) { toast.error('Enter a new password'); return; }
     if (pwForm.newPassword.length < 8) { toast.error('New password must be at least 8 characters'); return; }
+    if (pwForm.newPassword !== pwForm.confirmPassword) { toast.error('New passwords do not match'); return; }
     if (pwForm.currentPassword === pwForm.newPassword) { toast.error('New password must be different from current password'); return; }
+
     setPwLoading(true);
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error('Not authenticated');
 
-      // Check if user has a Google provider (no password)
       const hasEmailProvider = currentUser.providerData.some(p => p.providerId === 'password');
       if (!hasEmailProvider) {
-        toast.error('Your account uses Google sign-in. Password change is not applicable.');
+        toast.error('Your account uses Google sign-in. Use "Send Reset Email" below to set a password.');
         return;
       }
 
-      // Reauthenticate with current password to verify it
       const credential = EmailAuthProvider.credential(currentUser.email, pwForm.currentPassword);
       await reauthenticateWithCredential(currentUser, credential);
-
-      // Current password is valid — now update to new password
       await updatePassword(currentUser, pwForm.newPassword);
 
       setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -219,11 +204,28 @@ export default function Settings() {
         toast.error('New password is too weak — use at least 8 characters');
       } else if (err.code === 'auth/too-many-requests') {
         toast.error('Too many attempts. Please try again later.');
+      } else if (err.code === 'auth/requires-recent-login') {
+        toast.error('Session expired. Please sign out and sign in again, then retry.');
       } else {
         toast.error(err.message || 'Failed to change password');
       }
     } finally {
       setPwLoading(false);
+    }
+  };
+
+  const handleSendResetEmail = async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser?.email) { toast.error('No email address found on your account'); return; }
+    try {
+      await sendPasswordResetEmail(auth, currentUser.email);
+      toast.success(`Reset email sent to ${currentUser.email}`);
+    } catch (err) {
+      if (err.code === 'auth/too-many-requests') {
+        toast.error('Too many requests. Please wait a few minutes and try again.');
+      } else {
+        toast.error(err.message || 'Failed to send reset email');
+      }
     }
   };
 
@@ -307,22 +309,6 @@ export default function Settings() {
                 <motion.div key="profile" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
                   <div className="card p-6">
                     <h2 className="text-lg font-semibold text-gray-900 mb-6">Profile Information</h2>
-                    <div className="flex items-center gap-4 mb-6 pb-6 border-b border-[#e5e7eb]">
-                      <div className="relative">
-                        {logoPreview
-                          ? <img src={logoPreview} alt="Logo" className="w-16 h-16 rounded-xl object-cover" />
-                          : <div className="w-16 h-16 rounded-xl bg-orange-500/20 flex items-center justify-center text-2xl font-bold text-orange-400">
-                              {(profileForm.displayName || 'U')[0].toUpperCase()}
-                            </div>}
-                      </div>
-                      <div>
-                        <button onClick={() => logoInputRef.current?.click()} className="btn-secondary text-sm py-2 flex items-center gap-2">
-                          <Upload className="w-4 h-4" /> Upload Logo
-                        </button>
-                        <p className="text-gray-500 text-xs mt-1.5">PNG, JPG up to 2MB</p>
-                        <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
-                      </div>
-                    </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                       {[
                         { key: 'displayName', label: 'Display Name', placeholder: 'Your name' },
@@ -347,9 +333,10 @@ export default function Settings() {
 
               {/* Security Tab */}
               {activeTab === 'security' && (
-                <motion.div key="security" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <motion.div key="security" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
                   <div className="card p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-6">Change Password</h2>
+                    <h2 className="text-lg font-semibold text-gray-900 mb-1">Change Password</h2>
+                    <p className="text-gray-500 text-sm mb-6">Must be at least 8 characters and different from your current password.</p>
                     <form onSubmit={handlePasswordChange} className="space-y-4 max-w-sm">
                       {[
                         { key: 'currentPassword', label: 'Current Password', show: 'current' },
@@ -373,6 +360,16 @@ export default function Settings() {
                         {pwLoading ? 'Updating...' : 'Update Password'}
                       </button>
                     </form>
+                  </div>
+
+                  <div className="card p-6">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-1">Forgot Your Password?</h2>
+                    <p className="text-gray-500 text-sm mb-4">
+                      We'll send a password reset link to <span className="font-medium text-gray-700">{auth.currentUser?.email}</span>.
+                    </p>
+                    <button onClick={handleSendResetEmail} className="btn-secondary flex items-center gap-2 text-sm">
+                      <Mail className="w-4 h-4" /> Send Reset Email
+                    </button>
                   </div>
                 </motion.div>
               )}
