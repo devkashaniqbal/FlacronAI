@@ -28,25 +28,33 @@ const sendEmail = async ({ to, templateId, params, subject, html, text }) => {
     return { skipped: true };
   }
 
-  // Prefer template ID if provided
-  if (templateId) {
-    const { data } = await brevo.post('/smtp/email', {
-      to:         [{ email: to }],
-      templateId,
-      params,
-    });
-    return data;
-  }
+  try {
+    // Prefer template ID if provided
+    if (templateId) {
+      const { data } = await brevo.post('/smtp/email', {
+        to:         [{ email: to }],
+        templateId,
+        params,
+      });
+      console.log(`[Email] Sent templateId=${templateId} to ${to}`, data);
+      return data;
+    }
 
-  // Fallback: inline HTML (used only if template ID not available)
-  const { data } = await brevo.post('/smtp/email', {
-    sender:      { name: FROM_NAME, email: FROM_EMAIL },
-    to:          [{ email: to }],
-    subject,
-    htmlContent: html,
-    textContent: text,
-  });
-  return data;
+    // Fallback: inline HTML (used only if template ID not available)
+    const { data } = await brevo.post('/smtp/email', {
+      sender:      { name: FROM_NAME, email: FROM_EMAIL },
+      to:          [{ email: to }],
+      subject,
+      htmlContent: html,
+      textContent: text,
+    });
+    console.log(`[Email] Sent "${subject}" to ${to}`, data);
+    return data;
+  } catch (err) {
+    const detail = err?.response?.data || err.message;
+    console.error(`[Email] Brevo error sending to ${to}:`, JSON.stringify(detail, null, 2));
+    throw err;
+  }
 };
 
 // ── Welcome ───────────────────────────────────────────────────────────────────

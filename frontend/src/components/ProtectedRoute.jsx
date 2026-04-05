@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Mail } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext.jsx';
 
 const ProtectedRoute = ({ children, requiredTier }) => {
@@ -55,7 +56,10 @@ const ProtectedRoute = ({ children, requiredTier }) => {
                   await authAPI.sendVerification();
                   setResendDone(true);
                   setTimeout(() => setResendDone(false), 30000);
-                } catch { /* silent */ }
+                } catch (err) {
+                  console.error('Resend verification error:', err?.response?.data || err.message);
+                  toast.error('Could not send email. Check console for details.');
+                }
                 setResending(false);
               }}
               disabled={resending}

@@ -113,8 +113,11 @@ const Auth = () => {
       } else {
         await register(form.email, form.password, form.displayName);
         toast.success('Account created! Please verify your email.');
-        // Fire verification email (don't block on this)
-        authAPI.sendVerification(pendingPlan || sessionStorage.getItem('flac_pending_plan')).catch(() => {});
+        // Fire verification email
+        authAPI.sendVerification(pendingPlan || sessionStorage.getItem('flac_pending_plan')).catch((err) => {
+          console.error('Failed to send verification email:', err?.response?.data || err.message);
+          toast.error('Could not send verification email. Please use the resend button below.');
+        });
         setAuthState('verifying');
       }
     } catch (err) {
