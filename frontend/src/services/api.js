@@ -163,6 +163,14 @@ export const salesAPI = {
   getLeads: (params) => api.get('/sales/leads', { params }),
   updateLead: (id, data) => api.put(`/sales/leads/${id}`, data),
   updateUserTier: (email, tier) => api.put('/sales/admin/update-tier', { email, tier }),
+  // Owner admin
+  lookupUser: (email) => api.get('/sales/admin/user', { params: { email } }),
+  getAdminUsers: (params) => api.get('/sales/admin/users', { params }),
+  getAdminStats: () => api.get('/sales/admin/stats'),
+  deleteUser: (uid) => api.delete(`/sales/admin/user/${uid}`),
+  getUserReports: (uid) => api.get(`/sales/admin/user/${uid}/reports`),
+  getUserBilling: (uid) => api.get(`/sales/admin/user/${uid}/billing`),
+  sendUserEmail: (data) => api.post('/sales/admin/email', data),
 };
 
 export default api;

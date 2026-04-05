@@ -31,7 +31,7 @@ export default function AdminTierUpdate() {
     setSuccessMsg('');
     setSelectedTier('');
     try {
-      const res = await salesAPI.updateUserTier(email.trim(), null);
+      const res = await salesAPI.lookupUser(email.trim());
       if (res.data?.user) {
         setFoundUser(res.data.user);
         setSelectedTier(res.data.user.tier || 'starter');
