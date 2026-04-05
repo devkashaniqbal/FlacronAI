@@ -135,10 +135,17 @@ const sendEmailVerificationEmail = async (email, displayName, verificationLink) 
           <!-- Header -->
           <tr>
             <td style="background:linear-gradient(135deg,#f97316 0%,#ea580c 100%);padding:40px 32px;text-align:center;">
-              <div style="width:64px;height:64px;background:rgba(255,255,255,0.2);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
-                <span style="font-size:32px;">✅</span>
-              </div>
-              <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;letter-spacing:-0.5px;">Verify Your Email</h1>
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto 16px auto;">
+                <tr>
+                  <td style="width:32px;height:32px;background:rgba(255,255,255,0.2);border-radius:8px;text-align:center;vertical-align:middle;">
+                    <span style="color:#fff;font-size:18px;font-weight:900;line-height:32px;">⚡</span>
+                  </td>
+                  <td style="padding-left:10px;">
+                    <span style="color:#fff;font-size:18px;font-weight:700;">FlacronAI</span>
+                  </td>
+                </tr>
+              </table>
+              <h1 style="margin:16px 0 0;color:#ffffff;font-size:26px;font-weight:700;letter-spacing:-0.5px;">Verify Your Email</h1>
               <p style="margin:8px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">One last step to activate your FlacronAI account</p>
             </td>
           </tr>
