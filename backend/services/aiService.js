@@ -113,38 +113,99 @@ ${recommendations
 Write the complete report now with all sections fully populated with professional, realistic content appropriate for a ${lossType} loss at a residential/commercial property. Be specific, detailed, and professional.`;
 };
 
+// Checks if the generated content has a complete Section 7 cost table.
+// If missing or truncated, makes a focused AI call to generate just the table.
+const ensureLossSummary = async (reportData, content) => {
+  const section7Re = /##\s*SECTION\s*7[^\n]*\n([\s\S]*?)(?=##\s*SECTION\s*8|$)/i;
+  const match = content.match(section7Re);
+  const tableRows = ((match ? match[1] : '') .match(/^\|.+\|/gm) || [])
+    .filter(r => !r.match(/^\|\s*[-:]+\s*\|/)); // strip separator rows
+
+  // Need header + at least 3 data/total rows
+  if (tableRows.length >= 4) return content;
+
+  console.log('⚠️  Section 7 incomplete — generating cost summary separately...');
+
+  const summaryPrompt = `You are a professional insurance adjuster. Generate ONLY the estimated cost table for a ${reportData.lossType} insurance loss claim.
+
+Property: ${reportData.propertyAddress}
+Damages: ${reportData.damagesObserved || 'Typical ' + reportData.lossType + ' damage to a residential property'}
+Loss Description: ${reportData.lossDescription || ''}
+
+Output ONLY this markdown section (no preamble, no other text):
+
+## SECTION 7: ESTIMATED LOSS SUMMARY
+
+| Category | Description | Estimated Cost |
+|----------|-------------|----------------|
+[8-10 rows with REAL specific dollar amounts, e.g. $1,850.00. No placeholders.]
+| **TOTAL ESTIMATED LOSS** | | [exact sum of all rows above] |`;
+
+  let summaryText;
+  try {
+    summaryText = await generateText(summaryPrompt, { max_new_tokens: 700, temperature: 0.3 });
+  } catch {
+    try {
+      const openai = getOpenAI();
+      if (!openai) return content;
+      const res = await openai.chat.completions.create({
+        model: 'gpt-4-turbo-preview',
+        messages: [{ role: 'user', content: summaryPrompt }],
+        max_tokens: 700,
+        temperature: 0.3,
+      });
+      summaryText = res.choices[0].message.content;
+    } catch (err) {
+      console.warn('Loss summary fallback also failed:', err.message);
+      return content;
+    }
+  }
+
+  if (match) {
+    return content.replace(section7Re, summaryText.trim() + '\n\n');
+  }
+  // Content was truncated before reaching section 7 — append it
+  return content.trimEnd() + '\n\n' + summaryText.trim();
+};
+
 const generateReport = async (reportData, imageAnalysis) => {
   const prompt = buildReportPrompt(reportData, imageAnalysis);
+
+  let content;
+  let modelUsed;
 
   // Try WatsonX first
   try {
     console.log('🤖 Attempting WatsonX report generation...');
-    const result = await generateText(prompt, { max_new_tokens: 4096, temperature: 0.5 });
+    content = await generateText(prompt, { max_new_tokens: 4096, temperature: 0.5 });
+    modelUsed = 'watsonx/ibm/granite-3-8b-instruct';
     console.log('✅ Report generated via WatsonX');
-    return { content: result, modelUsed: 'watsonx/ibm/granite-3-8b-instruct' };
   } catch (watsonxErr) {
     console.warn('⚠️  WatsonX failed, falling back to OpenAI:', watsonxErr.message);
+
+    // Fallback to OpenAI
+    const openai = getOpenAI();
+    if (!openai) throw new Error('No AI provider available. Please configure WATSONX_API_KEY or OPENAI_API_KEY.');
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4-turbo-preview',
+      messages: [
+        { role: 'system', content: 'You are a professional insurance adjuster. Generate detailed, accurate insurance inspection reports.' },
+        { role: 'user', content: prompt },
+      ],
+      max_tokens: 4096,
+      temperature: 0.5,
+    });
+
+    content = completion.choices[0].message.content;
+    modelUsed = 'openai/gpt-4-turbo-preview';
+    console.log('✅ Report generated via OpenAI');
   }
 
-  // Fallback to OpenAI
-  const openai = getOpenAI();
-  if (!openai) throw new Error('No AI provider available. Please configure WATSONX_API_KEY or OPENAI_API_KEY.');
+  // Ensure Section 7 cost table is complete — patch it if truncated
+  content = await ensureLossSummary(reportData, content);
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4-turbo-preview',
-    messages: [
-      { role: 'system', content: 'You are a professional insurance adjuster. Generate detailed, accurate insurance inspection reports.' },
-      { role: 'user', content: prompt },
-    ],
-    max_tokens: 4096,
-    temperature: 0.5,
-  });
-
-  console.log('✅ Report generated via OpenAI');
-  return {
-    content: completion.choices[0].message.content,
-    modelUsed: 'openai/gpt-4-turbo-preview',
-  };
+  return { content, modelUsed };
 };
 
 const analyzeImages = async (imagePaths) => {
