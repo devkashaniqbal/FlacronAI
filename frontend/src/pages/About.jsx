@@ -94,7 +94,7 @@ export default function About() {
                 Marcus reached out to his longtime friend Alex Morgan, who had spent a decade navigating the technology side of major insurance carriers, and Sarah Chen, who had been building machine learning systems for enterprise clients. The three of them agreed: the technology to fix this problem existed. It just hadn't been applied to this industry with the right domain depth.
               </p>
               <p>
-                They spent six months building a proof of concept — combining GPT-4 Vision for photo analysis with IBM WatsonX for compliance structuring, wrapping it in an interface any adjuster could use without training. The first beta users reduced their per-report time from an average of 3.8 hours to under one hour. That data confirmed they were onto something real. FlacronAI launched publicly in February 2024 and has grown steadily through word-of-mouth within the adjusting community ever since.
+                They spent six months building a proof of concept — combining AI-powered photo analysis with compliance structuring, wrapping it in an interface any adjuster could use without training. The first beta users reduced their per-report time from an average of 3.8 hours to under one hour. That data confirmed they were onto something real. FlacronAI launched publicly in February 2024 and has grown steadily through word-of-mouth within the adjusting community ever since.
               </p>
             </div>
           </motion.div>

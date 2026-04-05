@@ -20,8 +20,8 @@ const STATUSES = ['All', 'completed', 'processing', 'failed', 'archived'];
 
 const GENERATION_STEPS = [
   'Uploading photos...',
-  'Analyzing images with GPT-4 Vision...',
-  'Generating report with IBM WatsonX AI...',
+  'Analyzing damage photos with AI...',
+  'Generating report with FlacronAI...',
   'Finalizing...',
 ];
 

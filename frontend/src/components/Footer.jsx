@@ -97,7 +97,7 @@ const Footer = () => {
             {/* Powered by badges */}
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs text-gray-400 font-medium">Powered by</span>
-              <span className="text-xs bg-blue-600/10 text-blue-700 border border-blue-200 px-2 py-0.5 rounded font-semibold">IBM WatsonX AI</span>
+              <span className="text-xs bg-orange-500/10 text-orange-700 border border-orange-200 px-2 py-0.5 rounded font-semibold">FlacronAI Engine</span>
               <span className="text-xs bg-sky-500/10 text-sky-700 border border-sky-200 px-2 py-0.5 rounded font-semibold">Microsoft</span>
             </div>
           </div>

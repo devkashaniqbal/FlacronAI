@@ -23,7 +23,7 @@ const QUICK_DEMOS = [
 const FORM_INIT = { claimNumber: '', insuredName: '', propertyAddress: '', lossDate: '', lossType: 'Water Damage', reportType: 'Initial', propertyDetails: '', lossDescription: '', damagesObserved: '', recommendations: '', additionalNotes: '' };
 const LOSS_TYPES = ['Water Damage','Fire Damage','Wind/Hail Damage','Vandalism','Theft','Flood','Earthquake','Smoke Damage','Vehicle Impact','Other'];
 const REPORT_TYPES = ['Initial','Supplemental','Final','Re-inspection','Catastrophe'];
-const GEN_STEPS = ['Analyzing claim data…','Running AI vision on photos…','Generating report via IBM WatsonX…','Scoring & finalizing…'];
+const GEN_STEPS = ['Analyzing claim data…','Running AI vision on photos…','Generating report with FlacronAI…','Scoring & finalizing…'];
 
 const ROLE_COLORS = {
   owner:  'bg-orange-100 text-orange-700 border border-orange-200',
@@ -399,7 +399,7 @@ export default function EnterpriseDashboard() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-green-200 bg-green-50">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs text-green-700 font-medium">WatsonX Online</span>
+              <span className="text-xs text-green-700 font-medium">AI Online</span>
             </div>
             <button onClick={() => setActiveView('generate')}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold transition-colors shadow-sm shadow-orange-500/20">
@@ -424,7 +424,7 @@ export default function EnterpriseDashboard() {
                 {/* Quick-action cards */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
                   {[
-                    { icon: Zap, title: 'Generate Report', desc: 'AI-powered unlimited report generation with GPT-4 Vision', action: () => setActiveView('generate'), accent: 'bg-orange-50 border-orange-200', iconBg: 'bg-orange-500', chip: 'text-orange-600 bg-orange-100' },
+                    { icon: Zap, title: 'Generate Report', desc: 'AI-powered unlimited report generation', action: () => setActiveView('generate'), accent: 'bg-orange-50 border-orange-200', iconBg: 'bg-orange-500', chip: 'text-orange-600 bg-orange-100' },
                     { icon: Globe, title: 'White-Label Active', desc: 'Your brand on all reports, exports & portal', action: () => setActiveView('whitelabel'), accent: 'bg-blue-50 border-blue-200', iconBg: 'bg-blue-500', chip: 'text-blue-600 bg-blue-100' },
                     { icon: Users, title: 'Manage Team', desc: 'Invite members, set roles, control access', action: () => setActiveView('team'), accent: 'bg-violet-50 border-violet-200', iconBg: 'bg-violet-500', chip: 'text-violet-600 bg-violet-100' },
                   ].map(f => (

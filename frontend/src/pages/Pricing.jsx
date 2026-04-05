@@ -29,12 +29,12 @@ const PLANS = [
   },
   {
     id: 'professional', name: 'Professional', icon: Star,
-    monthly: 39.99, annual: 31.99,
+    monthly: 39.99, annual: 39.17,
     description: 'For active adjusters who need more power',
     color: 'blue', popular: true,
     features: [
       { label: '50 reports/month', included: true },
-      { label: 'Advanced AI generation (GPT-4 Vision)', included: true },
+      { label: 'Advanced AI report generation', included: true },
       { label: 'PDF, DOCX, HTML export', included: true },
       { label: 'No watermarks', included: true },
       { label: 'Priority email support', included: true },
@@ -47,12 +47,12 @@ const PLANS = [
   },
   {
     id: 'agency', name: 'Agency', icon: Users,
-    monthly: 99.99, annual: 79.99,
+    monthly: 149.99, annual: 119.17,
     description: 'For agencies managing multiple adjusters',
     color: 'purple',
     features: [
       { label: '200 reports/month', included: true },
-      { label: 'Advanced AI generation (GPT-4 Vision)', included: true },
+      { label: 'Advanced AI report generation', included: true },
       { label: 'All export formats', included: true },
       { label: 'No watermarks', included: true },
       { label: 'Full CRM suite', included: true },
@@ -65,12 +65,12 @@ const PLANS = [
   },
   {
     id: 'enterprise', name: 'Enterprise', icon: Crown,
-    monthly: 499, annual: 399,
+    monthly: 299.99, annual: 239.17,
     description: 'Custom solutions for large organizations',
     color: 'amber',
     features: [
       { label: 'Unlimited reports', included: true },
-      { label: 'IBM WatsonX + GPT-4 Vision', included: true },
+      { label: 'Advanced AI report generation', included: true },
       { label: 'All export formats', included: true },
       { label: 'No watermarks', included: true },
       { label: 'Full CRM suite', included: true },
@@ -85,7 +85,7 @@ const PLANS = [
 
 const COMPARISON_FEATURES = [
   { label: 'Reports per month', starter: '5', professional: '50', agency: '200', enterprise: 'Unlimited' },
-  { label: 'AI Model', starter: 'Basic', professional: 'GPT-4 Vision', agency: 'GPT-4 Vision', enterprise: 'WatsonX + GPT-4' },
+  { label: 'AI Model', starter: 'Standard', professional: 'Advanced', agency: 'Advanced', enterprise: 'Advanced' },
   { label: 'Export formats', starter: 'PDF', professional: 'PDF, DOCX, HTML', agency: 'All', enterprise: 'All' },
   { label: 'Watermarks', starter: 'Yes', professional: 'No', agency: 'No', enterprise: 'No' },
   { label: 'CRM', starter: false, professional: false, agency: true, enterprise: true },

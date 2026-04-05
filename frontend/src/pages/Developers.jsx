@@ -25,7 +25,7 @@ const RESPONSE_EXAMPLE = `{
     "lossType": "Water Damage",
     "status": "completed",
     "qualityScore": 94,
-    "aiModel": "GPT-4 Vision + IBM WatsonX",
+    "aiModel": "FlacronAI",
     "content": "INSURANCE CLAIM REPORT\\n\\nClaim Number: CLM-2024-001\\n...",
     "createdAt": "2024-01-16T10:30:00.000Z"
   }

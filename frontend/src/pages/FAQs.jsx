@@ -9,7 +9,7 @@ const FAQS = [
   {
     category: 'General',
     q: 'What is FlacronAI?',
-    a: 'FlacronAI is an AI-powered insurance claim report generation platform. It uses GPT-4 Vision and IBM WatsonX to analyze damage photos and generate professional, carrier-compliant claim reports in minutes rather than hours.',
+    a: 'FlacronAI is an AI-powered insurance claim report generation platform. It analyzes damage photos and generates professional, carrier-compliant claim reports in minutes rather than hours.',
   },
   {
     category: 'General',
@@ -63,7 +63,7 @@ const FAQS = [
   {
     category: 'Technical',
     q: 'What AI models does FlacronAI use?',
-    a: 'FlacronAI uses OpenAI GPT-4 Vision for image analysis and narrative generation, and IBM WatsonX for compliance structuring and industry-standard formatting. The combination ensures visually accurate and professionally compliant output.',
+    a: 'FlacronAI uses proprietary AI models for image analysis, narrative generation, and compliance structuring. The result is visually accurate and professionally compliant output that meets carrier standards.',
   },
   {
     category: 'Technical',

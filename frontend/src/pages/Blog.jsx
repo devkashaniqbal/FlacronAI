@@ -9,7 +9,7 @@ export const BLOG_POSTS = [
   {
     slug: 'ai-transforming-insurance-claims',
     title: 'How AI is Transforming Insurance Claims Processing',
-    excerpt: 'Artificial intelligence is revolutionizing every stage of the insurance claims lifecycle — from first notice of loss to final settlement. Discover how AI tools like GPT-4 Vision and IBM WatsonX are enabling adjusters to deliver faster, more accurate reports.',
+    excerpt: 'Artificial intelligence is revolutionizing every stage of the insurance claims lifecycle — from first notice of loss to final settlement. Discover how AI tools are enabling adjusters to deliver faster, more accurate reports.',
     date: '2024-11-18',
     readingTime: '8 min read',
     author: { name: 'Alex Morgan', role: 'Head of AI Research' },
@@ -21,15 +21,15 @@ export const BLOG_POSTS = [
 
 Traditional claims processing required adjusters to manually inspect sites, photograph damage, and then spend additional hours drafting narrative reports from scratch. A single water damage claim could require 3–5 hours of adjuster time beyond the physical inspection — time spent writing, not assessing.
 
-## GPT-4 Vision Changes the Game
+## AI Vision Changes the Game
 
-OpenAI's GPT-4 Vision model can analyze damage photographs with remarkable accuracy. Given a series of images of a flooded kitchen, the model can identify the type and extent of water damage, estimate affected square footage, note secondary damage indicators like mold risk or structural compromise, and generate precise, adjuster-ready language describing each issue.
+FlacronAI's computer vision engine can analyze damage photographs with remarkable accuracy. Given a series of images of a flooded kitchen, the AI can identify the type and extent of water damage, estimate affected square footage, note secondary damage indicators like mold risk or structural compromise, and generate precise, adjuster-ready language describing each issue.
 
 This isn't a replacement for the human expert — it's a force multiplier. Adjusters who once spent 4 hours on report writing can now review and approve AI drafts in under 30 minutes.
 
-## IBM WatsonX Adds Compliance and Structure
+## AI Compliance and Structure
 
-Where GPT-4 Vision excels at visual analysis, IBM WatsonX brings deep knowledge of insurance compliance standards, CRU GROUP guidelines, and jurisdictional requirements. FlacronAI uses WatsonX to ensure every generated report meets the professional standards expected by carriers and TPAs.
+The AI engine brings deep knowledge of insurance compliance standards, CRU GROUP guidelines, and jurisdictional requirements. FlacronAI ensures every generated report meets the professional standards expected by carriers and TPAs.
 
 The combination produces reports that are not just descriptively accurate — they're structurally compliant, formatted to industry specification, and ready to attach to a claim file.
 
@@ -213,7 +213,7 @@ Pre-existing water damage — staining, previous repairs, old mold — must be n
 
 ## AI-Assisted Water Damage Documentation
 
-FlacronAI's GPT-4 Vision model is trained specifically on water damage patterns. When you upload photos, the AI identifies water lines, staining patterns, materials affected, and potential hidden damage indicators. Combined with your moisture readings entered in the notes field, the generated report accurately characterizes the scope of loss in carrier-compliant language.`,
+FlacronAI's AI Vision engine is trained specifically on water damage patterns. When you upload photos, the AI identifies water lines, staining patterns, materials affected, and potential hidden damage indicators. Combined with your moisture readings entered in the notes field, the generated report accurately characterizes the scope of loss in carrier-compliant language.`,
   },
   {
     slug: 'white-label-insurance-software',
@@ -258,14 +258,14 @@ Agencies typically have their white-label portal live within 24–48 hours of co
 
 ## Is It Worth the Enterprise Price?
 
-The Enterprise plan at $499/month includes unlimited reports — itself a significant value for high-volume agencies processing 500+ claims monthly. Add the white-label capabilities, dedicated support, and custom AI training options, and the per-report economics are compelling compared to building and maintaining proprietary software, which easily costs $200,000–$500,000+ in development and ongoing maintenance.
+The Enterprise plan at $299.99/month includes unlimited reports — itself a significant value for high-volume agencies processing 500+ claims monthly. Add the white-label capabilities, dedicated support, and custom AI training options, and the per-report economics are compelling compared to building and maintaining proprietary software, which easily costs $200,000–$500,000+ in development and ongoing maintenance.
 
 For agencies with 5+ adjusters generating serious report volume, Enterprise is not just an upgrade — it's a business infrastructure investment.`,
   },
   {
     slug: 'gpt4-vision-damage-assessment',
-    title: 'GPT-4 Vision for Damage Assessment: Real-World Results',
-    excerpt: 'We ran a 90-day study comparing AI-assisted damage assessment using GPT-4 Vision against traditional manual assessment for 500 property claims. The data reveals where AI excels, where human judgment still wins, and how the two together outperform either alone.',
+    title: 'AI Vision for Damage Assessment: Real-World Results',
+    excerpt: 'We ran a 90-day study comparing AI-assisted damage assessment against traditional manual assessment for 500 property claims. The data reveals where AI excels, where human judgment still wins, and how the two together outperform either alone.',
     date: '2024-08-28',
     readingTime: '9 min read',
     author: { name: 'Marcus Davis', role: 'Product Specialist' },
@@ -275,19 +275,19 @@ For agencies with 5+ adjusters generating serious report volume, Enterprise is n
 
 ## Study Design
 
-Over 90 days, we analyzed 500 property insurance claims — spanning water damage, fire, wind, hail, and vandalism. Each claim was assessed three ways: by a human adjuster working alone, by GPT-4 Vision alone (with no human input beyond photo upload), and by a human adjuster reviewing and editing the AI-generated assessment. All 1,500 outputs were then evaluated by a panel of senior claims professionals blind to which method produced each report.
+Over 90 days, we analyzed 500 property insurance claims — spanning water damage, fire, wind, hail, and vandalism. Each claim was assessed three ways: by a human adjuster working alone, by AI Vision alone (with no human input beyond photo upload), and by a human adjuster reviewing and editing the AI-generated assessment. All 1,500 outputs were then evaluated by a panel of senior claims professionals blind to which method produced each report.
 
 ## What the Data Showed
 
-**Accuracy on scope identification:** Human-only assessments correctly identified all damaged materials in 82% of claims. GPT-4 Vision alone achieved 76% — lower, due primarily to misidentification of material types in lower-quality photos. Human + AI achieved 91%, the highest of the three methods. The AI caught things humans missed in their initial inspection; the human corrected AI errors. Together they were better than either alone.
+**Accuracy on scope identification:** Human-only assessments correctly identified all damaged materials in 82% of claims. AI Vision alone achieved 76% — lower, due primarily to misidentification of material types in lower-quality photos. Human + AI achieved 91%, the highest of the three methods. The AI caught things humans missed in their initial inspection; the human corrected AI errors. Together they were better than either alone.
 
-**Report completeness:** GPT-4 Vision produced structurally complete reports (all required sections present) 97% of the time. Human-only reports were complete 83% of the time. The AI is a remarkably reliable structure follower.
+**Report completeness:** AI Vision produced structurally complete reports (all required sections present) 97% of the time. Human-only reports were complete 83% of the time. The AI is a remarkably reliable structure follower.
 
 **Carrier QA scores:** Reports submitted to carrier QA teams scored an average of 78/100 for human-only, 71/100 for AI-only, and 89/100 for human + AI. The AI brings consistency and structure; the human brings contextual nuance and site-specific detail the AI cannot access from photos alone.
 
 **Time to submission:** Human-only average was 4.2 hours from site departure to report submission. AI-only was 45 minutes (photo upload to report generation). Human + AI was 1.1 hours. The time savings with AI assistance is not incremental — it's transformational.
 
-## Where GPT-4 Vision Excels
+## Where AI Vision Excels
 
 The model is remarkably good at:
 - Identifying water lines and damage extent from staining patterns

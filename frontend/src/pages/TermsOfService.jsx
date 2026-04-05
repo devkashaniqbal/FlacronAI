@@ -18,8 +18,8 @@ We reserve the right to modify these Terms at any time. We will notify users of 
     content: `FlacronAI provides an AI-powered insurance claim report generation platform. The Service enables users to submit claim data and damage photographs for analysis by artificial intelligence systems, resulting in professionally formatted insurance claim reports.
 
 **Core service capabilities include:**
-- AI-powered damage photo analysis using computer vision (GPT-4 Vision)
-- Structured report generation using IBM WatsonX language models
+- AI-powered damage photo analysis using computer vision
+- Structured report generation using FlacronAI language models
 - Report export in PDF, DOCX, and HTML formats (plan-dependent)
 - A customer relationship management (CRM) module for client and claim tracking
 - White-label portal configuration for enterprise users

@@ -16,7 +16,7 @@ const TIER_INFO = {
   },
   professional: {
     name: 'Professional', price: 39.99, icon: Star, color: 'text-orange-400', bg: 'bg-orange-500/10',
-    features: ['50 reports/month', 'No watermarks', 'PDF, DOCX, HTML export', 'GPT-4 Vision analysis', 'Priority email support'],
+    features: ['50 reports/month', 'No watermarks', 'PDF, DOCX, HTML export', 'Advanced AI analysis', 'Priority email support'],
   },
   agency: {
     name: 'Agency', price: 99.99, icon: Users, color: 'text-amber-400', bg: 'bg-amber-500/10',

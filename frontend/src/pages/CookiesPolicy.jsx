@@ -71,7 +71,7 @@ We also use similar technologies such as web beacons, pixels, and local storage 
 
 **Stripe** — Secure payment processing. Stripe sets cookies for fraud prevention and to ensure secure, seamless payment flows. No payment card data is ever stored on our servers. Learn more at stripe.com/privacy.
 
-**IBM (WatsonX)** — AI report generation infrastructure. WatsonX processes report generation requests server-side and does not set cookies in your browser directly.
+**FlacronAI Engine** — AI report generation infrastructure. The AI engine processes report generation requests server-side and does not set cookies in your browser directly.
 
 We do not use advertising cookies or tracking cookies for ad targeting purposes. We will never sell your data to third-party advertisers.`,
   },

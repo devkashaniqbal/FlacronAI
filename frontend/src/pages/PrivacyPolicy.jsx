@@ -41,8 +41,8 @@ We do not use your claim data, photos, or report content to train or improve AI 
     title: '3. Data Sharing',
     content: `We do not sell your personal data. We share data only as follows:
 
-- **Service providers:** Third-party vendors who assist in delivering the service. This includes Google Firebase (authentication, database), Stripe (payments), OpenAI (AI processing), and IBM (WatsonX processing). All vendors are bound by data processing agreements and may not use your data for independent purposes.
-- **OpenAI and IBM data handling:** Photos and claim text submitted for AI generation are transmitted to OpenAI and IBM WatsonX APIs for processing. Both companies process this data under strict confidentiality agreements and do not use submitted data for model training under our enterprise API terms.
+- **Service providers:** Third-party vendors who assist in delivering the service. This includes Google Firebase (authentication, database), Stripe (payments), and AI processing partners. All vendors are bound by data processing agreements and may not use your data for independent purposes.
+- **AI data handling:** Photos and claim text submitted for AI generation are transmitted to our AI processing partners. All partners process this data under strict confidentiality agreements and do not use submitted data for model training.
 - **Legal requirements:** We may disclose data when required by law, court order, or governmental authority, provided we have received proper legal process.
 - **Business transfers:** In the event of a merger, acquisition, or sale of assets, customer data may be transferred as part of that transaction. We will provide notice before data is subject to a different privacy policy.
 - **With your consent:** For any other purpose, only with your explicit consent.`,

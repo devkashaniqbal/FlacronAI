@@ -30,8 +30,8 @@ const REPORT_LINES = [
 
 const STEPS_ANIM = [
   { label: 'Uploading photos', icon: <Image className="w-3.5 h-3.5" />, done: true },
-  { label: 'Analyzing damage with GPT-4 Vision', icon: <Eye className="w-3.5 h-3.5" />, done: true },
-  { label: 'Generating report via IBM WatsonX', icon: <Cpu className="w-3.5 h-3.5" />, active: true },
+  { label: 'Analyzing damage with AI Vision', icon: <Eye className="w-3.5 h-3.5" />, done: true },
+  { label: 'Generating report with FlacronAI', icon: <Cpu className="w-3.5 h-3.5" />, active: true },
   { label: 'Finalizing & scoring', icon: <CheckCircle className="w-3.5 h-3.5" />, done: false },
 ];
 
@@ -98,7 +98,7 @@ const DashboardMock = () => {
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs text-gray-500">WatsonX Online</span>
+            <span className="text-xs text-gray-500">AI Online</span>
           </div>
         </div>
 
@@ -311,7 +311,7 @@ const DashboardMock = () => {
         </div>
         <div>
           <p className="text-[10px] text-gray-400">Powered by</p>
-          <p className="text-xs font-bold text-gray-800">IBM WatsonX AI</p>
+          <p className="text-xs font-bold text-gray-800">FlacronAI Engine</p>
         </div>
       </motion.div>
 
@@ -352,9 +352,9 @@ const Counter = ({ end, suffix = '' }) => {
 };
 
 const features = [
-  { icon: Zap, title: 'AI Report Generation', desc: 'IBM WatsonX Granite + GPT-4 generates full CRU GROUP-standard reports in 60 seconds.', color: 'from-orange-500 to-amber-500' },
+  { icon: Zap, title: 'AI Report Generation', desc: 'FlacronAI generates full CRU GROUP-standard reports in 60 seconds.', color: 'from-orange-500 to-amber-500' },
   { icon: FileText, title: 'Multi-Format Export', desc: 'Export professional PDFs with custom branding, editable DOCX files, and embeddable HTML.', color: 'from-orange-500 to-cyan-500' },
-  { icon: Image, title: 'AI Image Analysis', desc: 'Upload up to 100 damage photos. GPT-4 Vision analyzes each one and integrates findings into the report.', color: 'from-emerald-500 to-teal-500' },
+  { icon: Image, title: 'AI Image Analysis', desc: 'Upload up to 100 damage photos. AI Vision analyzes each one and integrates findings into the report.', color: 'from-emerald-500 to-teal-500' },
   { icon: Users, title: 'CRM Integration', desc: 'Manage clients, schedule inspections, track claims — all linked to your reports automatically.', color: 'from-orange-500 to-amber-500' },
   { icon: Globe, title: 'White-Label Portal', desc: 'Enterprise clients get a fully branded portal with custom domain, logo, colors, and report footer.', color: 'from-pink-500 to-rose-500' },
   { icon: Code2, title: 'Developer API', desc: 'REST API with API key authentication. Integrate FlacronAI into your existing claim management system.', color: 'from-violet-500 to-orange-500' },
@@ -362,7 +362,7 @@ const features = [
 
 const steps = [
   { num: '01', title: 'Upload & Fill Details', desc: 'Enter claim information and upload up to 100 damage photos. Takes less than 2 minutes.' },
-  { num: '02', title: 'AI Generates Report', desc: 'IBM WatsonX analyzes your inputs. GPT-4 Vision processes each photo. Full report in ~60 seconds.' },
+  { num: '02', title: 'AI Generates Report', desc: 'FlacronAI analyzes your inputs and processes each photo. Full report in ~60 seconds.' },
   { num: '03', title: 'Export & Share', desc: 'Download as PDF with your logo, export to DOCX, or share a secure link. Watermark-free on paid plans.' },
 ];
 
@@ -403,7 +403,7 @@ const Home = () => {
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm font-medium mb-6">
                 <Zap className="w-3.5 h-3.5" />
-                Powered by IBM WatsonX + GPT-4
+                Powered by FlacronAI
               </div>
               <h1 className="text-5xl lg:text-6xl xl:text-7xl font-black text-gray-900 leading-tight tracking-tight mb-6">
                 Generate Insurance Reports in{' '}

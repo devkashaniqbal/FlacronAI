@@ -74,7 +74,7 @@ token = response.json()['token']`,
         { name: 'photos', type: 'file[]', required: false, desc: 'Up to 100 damage photos (JPEG/PNG)' },
         { name: 'notes', type: 'string', required: false, desc: 'Additional adjuster notes' },
       ],
-      response: `{ "report": { "_id": "...", "claimNumber": "CLM-001", "content": "...", "qualityScore": 92, "aiModel": "GPT-4 Vision + WatsonX", "status": "completed" } }`,
+      response: `{ "report": { "_id": "...", "claimNumber": "CLM-001", "content": "...", "qualityScore": 92, "aiModel": "FlacronAI", "status": "completed" } }`,
       examples: {
         curl: `curl -X POST https://api.flacronai.com/api/reports/generate \\
   -H "Authorization: Bearer YOUR_TOKEN" \\
