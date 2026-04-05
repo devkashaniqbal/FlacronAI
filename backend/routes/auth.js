@@ -185,18 +185,25 @@ router.post('/send-verification', authenticateToken, async (req, res) => {
       '/dashboard' +
       (pendingPlan && pendingPlan !== 'starter' ? '?pending_plan=' + pendingPlan : '');
 
+    console.log('[verify] generating link for', req.user.email, 'continueUrl:', continueUrl);
     const link = await auth.generateEmailVerificationLink(req.user.email, { url: continueUrl });
+    console.log('[verify] link generated OK');
 
     const { sendEmailVerificationEmail } = require('../services/emailService');
     const displayName = userRecord.displayName || req.user.email.split('@')[0];
+    console.log('[verify] sending email via Brevo...');
     await sendEmailVerificationEmail(req.user.email, displayName, link);
+    console.log('[verify] email sent OK');
 
     return res.json({ success: true, message: 'Verification email sent' });
   } catch (err) {
     if (err.code === 'auth/email-already-verified') {
       return res.json({ success: true, message: 'Email already verified' });
     }
-    console.error('send-verification error:', err);
+    console.error('[verify] FAILED at step above ^^^');
+    console.error('[verify] error code:', err.code);
+    console.error('[verify] error message:', err.message);
+    console.error('[verify] full error:', JSON.stringify(err?.response?.data || err, null, 2));
     return res.status(500).json({ success: false, error: 'Failed to send verification email', code: 'VERIFY_EMAIL_ERROR' });
   }
 });
