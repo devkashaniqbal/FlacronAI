@@ -78,7 +78,7 @@ const generatePDF = async (report, options = {}) => {
             .font(ri === 0 || isTotalRow ? 'Helvetica-Bold' : 'Helvetica');
           row.forEach((cell, ci) => {
             doc.text(
-              cell.trim().replace(/\*\*(.*?)\*\*/g, '$1'),
+              stripMd(cell.trim()),
               margin + ci * colW + 4,
               rowY + 7,
               { width: colW - 8, ellipsis: true, lineBreak: false }
@@ -178,23 +178,31 @@ const generatePDF = async (report, options = {}) => {
       const content = report.content || '';
       const lines   = content.split('\n');
 
+      // helper: strip markdown bold/italic/code safely (use function to avoid $1 pattern issues)
+      const stripMd = t => t
+        .replace(/\*\*(.*?)\*\*/g, (_, g) => g)
+        .replace(/\*(.*?)\*/g, (_, g) => g)
+        .replace(/`(.*?)`/g, (_, g) => g);
+
       for (const line of lines) {
-        // H1
-        if (line.startsWith('# ')) {
+        const trimmedLine = line.trim();
+
+        // H3 — must check before H2 and H1
+        if (/^###/.test(trimmedLine)) {
           flushTable();
-          ensureSpace(50);
-          doc.fontSize(16).fillColor('#0f172a').font('Helvetica-Bold')
-            .text(line.slice(2), margin, doc.y + 8, { width: contentWidth });
-          doc.rect(margin, doc.y + 2, contentWidth, 1.5).fill(accentHex);
-          doc.y += 14;
+          ensureSpace(40);
+          const title = stripMd(trimmedLine.replace(/^###\s*/, ''));
+          doc.fontSize(11).fillColor('#1e293b').font('Helvetica-Bold')
+            .text(title, margin, doc.y + 5, { width: contentWidth });
+          doc.y += 4;
           continue;
         }
 
         // H2
-        if (line.startsWith('## ')) {
+        if (/^##/.test(trimmedLine)) {
           flushTable();
           ensureSpace(60);
-          const title = line.slice(3);
+          const title = stripMd(trimmedLine.replace(/^##\s*/, ''));
           const h2y = doc.y + 4;
           doc.rect(margin - 5, h2y, contentWidth + 10, 32).fill(accentHex);
           doc.fontSize(12).fillColor('white').font('Helvetica-Bold')
@@ -203,13 +211,15 @@ const generatePDF = async (report, options = {}) => {
           continue;
         }
 
-        // H3
-        if (line.startsWith('### ')) {
+        // H1
+        if (/^#/.test(trimmedLine)) {
           flushTable();
-          ensureSpace(40);
-          doc.fontSize(11).fillColor('#1e293b').font('Helvetica-Bold')
-            .text(line.slice(4), margin, doc.y + 5, { width: contentWidth });
-          doc.y += 4;
+          ensureSpace(50);
+          const title = stripMd(trimmedLine.replace(/^#\s*/, ''));
+          doc.fontSize(16).fillColor('#0f172a').font('Helvetica-Bold')
+            .text(title, margin, doc.y + 8, { width: contentWidth });
+          doc.rect(margin, doc.y + 2, contentWidth, 1.5).fill(accentHex);
+          doc.y += 14;
           continue;
         }
 
@@ -244,26 +254,23 @@ const generatePDF = async (report, options = {}) => {
         }
 
         // Bullet
-        if (line.trim().startsWith('- ') || line.trim().startsWith('* ')) {
+        if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ')) {
           ensureSpace(20);
-          const text = '•  ' + line.trim().slice(2).replace(/\*\*(.*?)\*\*/g, '$1');
+          const text = '•  ' + stripMd(trimmedLine.slice(2));
           doc.fontSize(10).fillColor('#374151').font('Helvetica')
             .text(text, margin + 12, doc.y + 2, { width: contentWidth - 12 });
           continue;
         }
 
         // Blank line
-        if (line.trim() === '') {
+        if (trimmedLine === '') {
           if (doc.y + 5 > pageHeight - 32) addPage();
           else doc.y += 5;
           continue;
         }
 
         // Regular paragraph
-        const clean = line
-          .replace(/\*\*(.*?)\*\*/g, '$1')
-          .replace(/\*(.*?)\*/g, '$1')
-          .replace(/`(.*?)`/g, '$1');
+        const clean = stripMd(line);
         if (clean.trim()) {
           ensureSpace(20);
           doc.fontSize(10).fillColor('#374151').font('Helvetica')
