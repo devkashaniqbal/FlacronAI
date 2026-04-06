@@ -29,6 +29,7 @@ const TermsOfService = lazy(() => import('./pages/TermsOfService.jsx'));
 const WhiteLabelPortal = lazy(() => import('./pages/WhiteLabelPortal.jsx'));
 const EnterpriseOnboarding = lazy(() => import('./pages/EnterpriseOnboarding.jsx'));
 const AdminTierUpdate = lazy(() => import('./pages/AdminTierUpdate.jsx'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
 const EnterpriseDashboard = lazy(() => import('./pages/EnterpriseDashboard.jsx'));
 const AcceptInvite = lazy(() => import('./pages/AcceptInvite.jsx'));
 const CookiesPolicy = lazy(() => import('./pages/CookiesPolicy.jsx'));
@@ -92,6 +93,7 @@ const App = () => {
         <Route path="/crm" element={<ProtectedRoute requiredTier="agency"><CRM /></ProtectedRoute>} />
         <Route path="/white-label" element={<ProtectedRoute requiredTier="enterprise"><WhiteLabelPortal /></ProtectedRoute>} />
         <Route path="/admin-tier-update" element={<ProtectedRoute><AdminTierUpdate /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
         <Route path="/enterprise-dashboard" element={<ProtectedRoute requiredTier="enterprise"><EnterpriseDashboard /></ProtectedRoute>} />
 
         {/* 404 */}

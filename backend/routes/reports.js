@@ -140,7 +140,7 @@ router.post('/generate', authenticateAny, (req, res, next) => {
       imagePaths,
       imageCount: imagePaths.length,
       qualityScore: qualityCheck.score,
-      status: 'complete',
+      status: 'completed',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       clientId: req.body.clientId || null,

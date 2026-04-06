@@ -118,16 +118,80 @@ function SkeletonRow() {
   );
 }
 
+const STATUS_STYLES = {
+  completed: 'bg-green-500/20 text-green-600 border-green-500/30',
+  complete: 'bg-green-500/20 text-green-600 border-green-500/30',
+  processing: 'bg-yellow-500/20 text-yellow-600 border-yellow-500/30',
+  failed: 'bg-red-500/20 text-red-500 border-red-500/30',
+  archived: 'bg-gray-400/20 text-gray-500 border-gray-400/30',
+};
+
+const STATUS_LABELS = ['completed', 'processing', 'failed', 'archived'];
+
 function StatusBadge({ status }) {
-  const map = {
-    completed: 'bg-green-500/20 text-green-400 border-green-500/30',
-    processing: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-    failed: 'bg-red-500/20 text-red-400 border-red-500/30',
-  };
+  const cls = STATUS_STYLES[status] || 'bg-gray-400/20 text-gray-500 border-gray-400/30';
+  const label = status === 'complete' ? 'completed' : (status || 'unknown');
   return (
-    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${map[status] || 'bg-gray-500/20 text-gray-600 border-gray-500/30'}`}>
-      {status}
+    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${cls}`}>
+      {label}
     </span>
+  );
+}
+
+function StatusToggle({ reportId, status, onUpdate }) {
+  const [open, setOpen] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleSelect = async (newStatus) => {
+    setOpen(false);
+    if (newStatus === status || newStatus === 'complete') return;
+    setUpdating(true);
+    try {
+      await reportsAPI.update(reportId, { status: newStatus });
+      onUpdate(reportId, newStatus);
+    } catch {
+      toast.error('Failed to update status');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const normalised = status === 'complete' ? 'completed' : status;
+  const cls = STATUS_STYLES[status] || 'bg-gray-400/20 text-gray-500 border-gray-400/30';
+
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button
+        disabled={updating}
+        onClick={() => setOpen(o => !o)}
+        className={`text-xs font-semibold px-2.5 py-1 rounded-full border flex items-center gap-1 transition-opacity ${cls} ${updating ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80 cursor-pointer'}`}
+      >
+        {updating ? '…' : normalised}
+        <svg className="w-2.5 h-2.5 opacity-60" viewBox="0 0 10 6" fill="currentColor">
+          <path d="M0 0l5 6 5-6z" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute z-30 top-full left-0 mt-1 w-36 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+          {STATUS_LABELS.map(s => (
+            <button
+              key={s}
+              onClick={() => handleSelect(s)}
+              className={`w-full text-left px-3 py-2 text-xs font-medium transition-colors hover:bg-gray-50 ${s === normalised ? 'text-orange-500 bg-orange-50/50' : 'text-gray-700'}`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -156,7 +220,6 @@ function ReportDetailModal({ report, onClose }) {
               ['Loss Date', report.lossDate],
               ['Loss Type', report.lossType],
               ['Report Type', report.reportType],
-              ['Status', report.status],
               ['Created', new Date(report.createdAt).toLocaleString()],
             ].map(([label, val]) => (
               <div key={label} className="flex gap-3">
@@ -164,6 +227,10 @@ function ReportDetailModal({ report, onClose }) {
                 <span className="text-gray-900">{val}</span>
               </div>
             ))}
+            <div className="flex gap-3 items-center">
+              <span className="text-gray-600 w-32 shrink-0">Status:</span>
+              <StatusBadge status={report.status} />
+            </div>
             {report.qualityScore && (
               <div className="flex gap-3">
                 <span className="text-gray-600 w-32 shrink-0">Quality Score:</span>
@@ -457,6 +524,10 @@ export default function Dashboard() {
 
   const toggleSelect = (id) => {
     setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const handleStatusUpdate = (id, newStatus) => {
+    setReports(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
   };
 
   const TIER_LIMITS = { starter: 5, professional: 50, agency: 200, enterprise: -1 };
@@ -1180,7 +1251,9 @@ export default function Dashboard() {
                             <td className="px-4 py-3 text-sm text-gray-900">{r.insuredName}</td>
                             <td className="px-4 py-3 text-sm text-gray-600">{r.lossDate ? new Date(r.lossDate).toLocaleDateString() : '—'}</td>
                             <td className="px-4 py-3 text-sm text-gray-700">{r.lossType}</td>
-                            <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
+                            <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                              <StatusToggle reportId={r.id} status={r.status} onUpdate={handleStatusUpdate} />
+                            </td>
                             <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                               <div className="flex items-center gap-1">
                                 <button onClick={() => setDetailReport(r)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="View">
