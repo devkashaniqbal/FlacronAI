@@ -68,13 +68,14 @@ const generatePDF = async (report, options = {}) => {
           ensureSpace(28);
           const rowH  = 24;
           const rowY  = doc.y;
-          const bg    = ri === 0 ? accentHex : (ri % 2 === 0 ? '#f8fafc' : 'white');
+          const isTotalRow = ri > 0 && row.some(c => /total/i.test(c));
+          const bg    = ri === 0 ? accentHex : isTotalRow ? '#1e293b' : (ri % 2 === 0 ? '#f8fafc' : 'white');
           // Draw row background
           doc.rect(margin, rowY, contentWidth, rowH).fill(bg);
           // Draw cell text with absolute y positioning
           doc.fontSize(9)
-            .fillColor(ri === 0 ? 'white' : '#1e293b')
-            .font(ri === 0 ? 'Helvetica-Bold' : 'Helvetica');
+            .fillColor(ri === 0 || isTotalRow ? 'white' : '#1e293b')
+            .font(ri === 0 || isTotalRow ? 'Helvetica-Bold' : 'Helvetica');
           row.forEach((cell, ci) => {
             doc.text(
               cell.trim().replace(/\*\*(.*?)\*\*/g, '$1'),
@@ -215,7 +216,9 @@ const generatePDF = async (report, options = {}) => {
         // Table row
         if (line.startsWith('|')) {
           inTable = true;
-          const cells = line.split('|').filter(c => c.trim() && !c.trim().match(/^[-:]+$/));
+          // slice(1,-1) removes the leading/trailing empty strings from | A | B | format
+          // then filter only separator lines — preserve empty cells for column alignment
+          const cells = line.split('|').slice(1, -1).filter(c => !c.trim().match(/^[-:]+$/));
           if (cells.length > 0) tableRows.push(cells);
           continue;
         }
