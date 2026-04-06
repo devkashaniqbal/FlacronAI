@@ -283,9 +283,10 @@ export default function CRM() {
     setClientsLoading(true); setApptsLoading(true); setClaimsLoading(true);
     try {
       const [cl, ap, cr] = await Promise.all([crmAPI.getClients(), crmAPI.getAppointments(), crmAPI.getClaims()]);
-      setClients(cl.data?.clients || cl.data || []);
-      setAppointments(ap.data?.appointments || ap.data || []);
-      setClaims(cr.data?.claims || cr.data || []);
+      const toArr = v => Array.isArray(v) ? v : [];
+      setClients(toArr(cl.data?.clients ?? cl.data));
+      setAppointments(toArr(ap.data?.appointments ?? ap.data));
+      setClaims(toArr(cr.data?.claims ?? cr.data));
     } catch { toast.error('Failed to load CRM data'); }
     finally { setClientsLoading(false); setApptsLoading(false); setClaimsLoading(false); }
   }, []);
