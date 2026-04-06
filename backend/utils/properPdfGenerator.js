@@ -187,11 +187,11 @@ const generatePDF = async (report, options = {}) => {
       for (const line of lines) {
         const trimmedLine = line.trim();
 
-        // H3 — must check before H2 and H1
+        // H3+ (###, ####, etc.) — must check before H2 and H1
         if (/^###/.test(trimmedLine)) {
           flushTable();
           ensureSpace(40);
-          const title = stripMd(trimmedLine.replace(/^###\s*/, ''));
+          const title = stripMd(trimmedLine.replace(/^#+\s*/, ''));
           doc.fontSize(11).fillColor('#1e293b').font('Helvetica-Bold')
             .text(title, margin, doc.y + 5, { width: contentWidth });
           doc.y += 4;
@@ -202,7 +202,7 @@ const generatePDF = async (report, options = {}) => {
         if (/^##/.test(trimmedLine)) {
           flushTable();
           ensureSpace(60);
-          const title = stripMd(trimmedLine.replace(/^##\s*/, ''));
+          const title = stripMd(trimmedLine.replace(/^#+\s*/, ''));
           const h2y = doc.y + 4;
           doc.rect(margin - 5, h2y, contentWidth + 10, 32).fill(accentHex);
           doc.fontSize(12).fillColor('white').font('Helvetica-Bold')
@@ -215,7 +215,7 @@ const generatePDF = async (report, options = {}) => {
         if (/^#/.test(trimmedLine)) {
           flushTable();
           ensureSpace(50);
-          const title = stripMd(trimmedLine.replace(/^#\s*/, ''));
+          const title = stripMd(trimmedLine.replace(/^#+\s*/, ''));
           doc.fontSize(16).fillColor('#0f172a').font('Helvetica-Bold')
             .text(title, margin, doc.y + 8, { width: contentWidth });
           doc.rect(margin, doc.y + 2, contentWidth, 1.5).fill(accentHex);
