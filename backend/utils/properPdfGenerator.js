@@ -233,10 +233,9 @@ const generatePDF = async (report, options = {}) => {
           continue;
         }
 
-        // End of table on blank line
-        if (inTable && line.trim() === '') {
-          flushTable();
-          doc.y += 4;
+        // Skip blank lines inside a table — don't flush mid-table
+        // (table is flushed properly when non-table content is encountered below)
+        if (inTable && trimmedLine === '') {
           continue;
         }
 
